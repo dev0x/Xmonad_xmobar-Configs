@@ -1,1 +1,0 @@
-/home/mracine/.xmonad/xmonad.hs
