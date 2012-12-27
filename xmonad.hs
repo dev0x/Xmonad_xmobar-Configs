@@ -13,6 +13,8 @@ import System.IO
 myTerminal = "urxvt"
 myWorkspaces = ["1:main","2:web","3:vim","4:chat","5:music"]
 
+myNormalBorderColor = "#808080"
+myFocusedBorderColor = "#009900"
 myLogHook :: Handle -> X ()
 myLogHook h = dynamicLogWithPP $ customPP {ppOutput = hPutStrLn h}
 
@@ -36,6 +38,8 @@ main = do
   xmonad	$ defaultConfig { 
 	terminal = myTerminal
 	,workspaces = myWorkspaces
+    ,normalBorderColor = myNormalBorderColor
+    ,focusedBorderColor = myFocusedBorderColor
 	,logHook = myLogHook xmproc
 	,layoutHook = myLayoutHook
 	,modMask = mod4Mask
