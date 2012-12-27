@@ -1,0 +1,22 @@
+Config { font = "xft:terminus:pixelsize=5"  
+    , bgColor = "#000000"
+    , fgColor = "#00FFFF"
+    , position = Top
+    , lowerOnStart = True 
+    , commands = [ Run MultiCpu ["<total>%","-L","3","-H","50","-l","green","--normal","orange","--high","red"]   40
+                 , Run BatteryP ["BAT0"]
+                     [ "-t", "<acstatus><watts>(<left>%)",
+                       "-L", "10", "-H", "80", "-p", "3",
+                       "--", "-O", "<fc=green>On</fc> ", "-o", "",
+                       "-L", "-15", "-H", "-5",
+                       "-l", "red", "-m", "blue", "-h", "green"
+                    ] 60 
+        , Run Memory ["-t","Mem: <usedratio>%", "-l", "green", "--normal","orange","--high","red"] 40
+        , Run Date "%a %b %_d %H:%M" "date" 60
+        , Run CpuFreq ["-t","<cpu0>|<cpu1>|<cpu2>","-L","0","-H","2","-l","lightblue","-n","#009900","-h","red"] 50
+        , Run StdinReader
+    ]
+    , sepChar = "%"
+    , alignSep = "}{"
+    , template = " %StdinReader% }{ %battery% <fc=#0033ff>|</fc> %multicpu% of %cpufreq% <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc> %date% "
+}
