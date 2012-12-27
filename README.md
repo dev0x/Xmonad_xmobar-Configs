@@ -1,4 +1,4 @@
-Xmonad-xmobar-terminal-settings
+Xmonad and xmobar Config settings
 ===============================
 
-These are the settings for my linux development environment.  Tiling window manager, term settings and Zsh settings.
+These are the settings for my favorite tiling window manager in linux.
