@@ -1,6 +1,7 @@
 -- Import Statements
 import XMonad
 import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.ICCCMFocus
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.SetWMName
 import XMonad.Util.Run(spawnPipe)
@@ -11,7 +12,7 @@ import System.IO
 
 --Define Terminal
 myTerminal = "urxvt"
-myWorkspaces = ["1:main","2:web","3:vim","4:chat","5:music"]
+myWorkspaces = ["1:irc","2:web","3:vim","4:scala","5:eclipse","6:code","7:misc"]
 
 myNormalBorderColor = "#808080"
 myFocusedBorderColor = "#009900"
@@ -20,7 +21,7 @@ myLogHook h = dynamicLogWithPP $ customPP {ppOutput = hPutStrLn h}
 
 myLayoutHook =  avoidStruts $ layoutHook defaultConfig 
 
-myStartupHook = setWMName "LG3D" 
+myStartupHook = setWMName "LG3D" -- stupid java
 
 customPP :: PP
 customPP = defaultPP{
@@ -40,22 +41,20 @@ main = do
 	,workspaces = myWorkspaces
     ,normalBorderColor = myNormalBorderColor
     ,focusedBorderColor = myFocusedBorderColor
-	,logHook = myLogHook xmproc
+	,logHook = takeTopFocus >> myLogHook xmproc
 	,layoutHook = myLayoutHook
 	,modMask = mod4Mask
     --,keys = myKeys
     ,startupHook = myStartupHook 
 	} `additionalKeys`
     [
-    ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colourscheme with dmenu
+    ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
     ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
     ,((mod4Mask, xK_Return), spawn "urxvt")
     --,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
     ,((mod4Mask .|. shiftMask, xK_s), spawn "sudo /usr/sbin/pm-suspend")
     ,((mod4Mask .|. shiftMask, xK_h), spawn "sudo /usr/sbin/pm-hibernate")
+    ,((mod4Mask, xK_h), spawn "synergyc 192.168.0.187")
     ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
-    --((0, xF86XK_AudioMute), spawn "amixer -q set PCM toggle"),
-    --((0, xF86XK_AudioRaiseVolume), spawn "amixer -q set PCM 2+"),
-    --((0, xF86XK_AudioLowerVolume), spawn "amixer -q set PCM 2-")
     ] 
 

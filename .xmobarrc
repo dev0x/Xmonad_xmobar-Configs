@@ -4,6 +4,7 @@ Config { font = "xft:terminus:pixelsize=5"
     , position = Top
     , lowerOnStart = True 
     , commands = [ Run MultiCpu ["-t", "Cores:<total0>% <total1>% <total2>%","-L","3","-H","50","-l","green","--normal","orange","--high","red"]   40
+                 , Run Weather "KMSN" ["-t", "<tempF>F", "-L","-3", "-H", "77", "--normal","green","--high","red","--low","lightblue"] 36000
                  , Run BatteryP ["BAT0"]
                      [ "-t", "<acstatus><watts>(<left>%)",
                        "-L", "10", "-H", "80", "-p", "3",
@@ -18,5 +19,5 @@ Config { font = "xft:terminus:pixelsize=5"
     ]
     , sepChar = "%"
     , alignSep = "}{"
-    , template = " %StdinReader% }{ %battery% <fc=#0033ff>|</fc> %multicpu% @ %cpufreq% <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc> %date% "
+    , template = " %StdinReader% }{ %battery% <fc=#0033ff>|</fc> %multicpu% @ %cpufreq% <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc> %date% %KMSN%"
 }
