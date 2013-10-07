@@ -1,0 +1,14 @@
+Config { bgColor = "black"
+		, fgColor = "grey"
+		, position = Top R 100
+		, lowerOnStart = True
+		, commands = [Run Date "%a %b %_d %H:%M" "date" 60
+			, Run CoreTemp ["-t", "Temp:<core0>|<core1>|<core2>|<core3>",
+				"-L", "40", "-H", "60",
+				"-l", "lightblue", "-n", "gray90", "-h", "red" ] 60 
+			, Run Com "/home/mracine/cputemp.sh" [] "cputemp" 45
+		]
+		, sepChar = "%"
+		, alignSep = "}{"
+		, template = "CoreTemp: %cputemp% <fc=#0033ff>|</fc> }{ %date%"
+}
