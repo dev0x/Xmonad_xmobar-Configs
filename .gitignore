@@ -1,0 +1,12 @@
+# vim swp files			#
+#########################
+*.swp
+
+# haskell output		#
+#########################
+xmonad.o
+xmonad.hi
+
+# xmonad executable		#
+#########################
+xmonad
