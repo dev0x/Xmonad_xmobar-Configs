@@ -1,8 +1,15 @@
 Config { 
-     bgColor = "#000000"
+     font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*" 
+    , borderColor = "black"
+    , border = TopB
+    , bgColor = "#000000"
     , fgColor = "#00FFFF"
     , position = TopW R 100
+    , persistent = False
     , lowerOnStart = True 
+    , hideOnStart = False
+    , allDesktops = False
+    , overrideRedirect = True
     , commands = [ Run MultiCpu ["-t", "CPUs:<total0>% <total1>% <total2>% <total3>%","-L","3","-H","50","-l","green","--normal","orange","--high","red"]   40
 		, Run Weather "KMSN" ["-t", "<tempF>F", "-L","-3", "-H", "77", "--normal","green","--high","red","--low","lightblue"] 36000
         , Run Memory ["-t","Mem: <usedratio>%", "-l", "green", "--normal","orange","--high","red"] 40

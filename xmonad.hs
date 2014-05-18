@@ -1,7 +1,7 @@
 -- Import Statements
 import XMonad
 import qualified Data.Map as M
-import XMonad.Util.EZConfig(additionalKeys)
+--import XMonad.Util.EZConfig(additionalKeys)
 import Graphics.X11.Xlib
 import System.IO
 import System.Exit
@@ -10,11 +10,13 @@ import System.Exit
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.SetWMName
+--import XMonad.Hooks
 
 -- utils
 import XMonad.Util.SpawnOnce
 import XMonad.Util.Run(spawnPipe)
 import XMonad.Util.Scratchpad
+--import XMonad.Util
 
 --layouts
 import XMonad.Layout.NoBorders
@@ -24,6 +26,7 @@ import XMonad.Layout.IM
 import XMonad.Layout.Tabbed
 import XMonad.Layout.PerWorkspace(onWorkspace)
 import XMonad.Layout.Grid
+--import XMonad.Layout
 
 
 -- Data.Ratio due to the IM layout
@@ -37,12 +40,25 @@ myTerminal = "urxvt"
 --------------------------------------------------------------------------------
 --Workspaces
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["1:chat","2:web","3:web2","4:code","5:code","6:code","7:misc", "8:term", "9:term1"]
+myWorkspaces = ["1:tmux","2:web","3:web2","4:code","5:code","6:code","7:im", "8:term", "9:term1"]
 
 --------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
 myNormalBorderColor = "#808080"
 myFocusedBorderColor = "#009900"
+
+--------------------------------------------------------------------------------
+-- MangeDocks --> ManageHook 
+myManageHook = composeAll . concat $
+   [ [ className =? "Chromium" --> doShift "web" ]
+   , [ className =? "Firefox-bin" --> doShift "web2"]
+   , [ className =? "Hangouts"    --> doShift "im" ]
+   , [(className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
+   ]
+   -- in a composeAll hook, you'd use: fmap ("VLC" `isInfixOf`) title --> doFloat
+  where myFloatsC = ["Hangouts", "Xmessage"]
+        myMatchAnywhereFloatsC = ["Google","hangouts"]
+        myMatchAnywhereFloatsT = ["VLC"] -- this one is silly for only one string!
 
 --------------------------------------------------------------------------------
 --logHook
@@ -57,7 +73,7 @@ myTheme = defaultTheme { decoHeight = 16
 						, inactiveBorderColor = "#000000"
 						}
 --------------------------------------------------------------------------------
-myLayoutHook	=  onWorkspace "1:chat" imLayout 
+myLayoutHook	=  onWorkspace "1:tmux" imLayout 
 				 $ onWorkspace "2:web" webL
 				 $ onWorkspace "3:web2" webL
 				 $ standardLayouts 
@@ -71,18 +87,10 @@ myLayoutHook	=  onWorkspace "1:chat" imLayout
 		full			= noBorders Full
  
 		--Im Layout
-		imLayout = avoidStruts 
-			$ smartBorders 
-			$ withIM ratio hangoutRoster 
-			$ reflectHoriz 
-			$ withIM hangoutRatio hangoutRoster (tiled ||| reflectTiled ||| Grid) where
-				chatLayout  = Grid
-		ratio = (1%9)
-		hangoutRatio = (1%8)
-		hangoutRoster = And (ClassName "hangouts") (Role "list")
+		imLayout = withIM (1/10) (Role "roster") (standardLayouts)
 		 
 		--Web Layout
-		webL = tabLayout  ||| tiled ||| reflectHoriz tiled |||  full 
+		webL = avoidStruts $ (tabLayout  ||| tiled ||| reflectHoriz tiled ||| Grid ||| Full)
 		 
 --------------------------------------------------------------------------------
 myStartupHook :: X ()
@@ -90,7 +98,7 @@ myStartupHook = do
 				spawnOnce "xmobar -x 1 ~/.xmobarrc2"
 
 customPP :: PP
-customPP = def{
+customPP = defaultPP {
 			ppHidden = xmobarColor "#00FF00" ""
 			, ppCurrent = xmobarColor "#859900" "" . wrap "[" "]" 
 			, ppUrgent = xmobarColor "#FF0000" "" . wrap "*" "*"
@@ -102,30 +110,30 @@ customPP = def{
 --------------------------------------------------------------------------------
 --Run XMonad with the defaults
 main = do
-  xmproc <- spawnPipe "xmobar" 
-  xmonad	$ def { 
+  xmproc <- spawnPipe "xmobar -x 0 ~/.xmobarrc" 
+  xmonad	$ defaultConfig { 
 	terminal = myTerminal
 	,workspaces = myWorkspaces
+    ,manageHook = myManageHook
 	,normalBorderColor = myNormalBorderColor
 	,focusedBorderColor = myFocusedBorderColor
 	,logHook = myLogHook xmproc
 	,layoutHook = myLayoutHook
-	,modMask = mod4Mask
 	,keys = myKeys
 	,startupHook = myStartupHook >> setWMName "LG3D"
   } 
 
 myKeys x = M.union (M.fromList (newKeys x)) (keys defaultConfig x)
 --------------------------------------------------------------------------------
-newKeys conf@(XConfig {XMonad.modMask = modm}) = [    
+newKeys conf@(XConfig {XMonad.modMask = mod4Mask}) = [    
     ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
     ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
     ,((mod4Mask, xK_Return), spawn "urxvt")
-    --,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
+    ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
     --,((mod4Mask .|. shiftMask, xK_s), spawn "sudo /usr/sbin/pm-suspend")
     --,((mod4Mask .|. shiftMask, xK_h), spawn "sudo /usr/sbin/pm-hibernate")
+    ,((mod4Mask, xK_v), spawn "gvim")
     ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
 	]
 --------------------------------------------------------------------------------
-     
 
