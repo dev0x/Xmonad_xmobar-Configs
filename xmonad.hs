@@ -73,7 +73,7 @@ myTheme = defaultTheme { decoHeight = 16
 						, inactiveBorderColor = "#000000"
 						}
 --------------------------------------------------------------------------------
-myLayoutHook	=  onWorkspace "1:tmux" imLayout 
+myLayoutHook	=  onWorkspace "7:im" imLayout 
 				 $ onWorkspace "2:web" webL
 				 $ onWorkspace "3:web2" webL
 				 $ standardLayouts 
@@ -130,9 +130,6 @@ newKeys conf@(XConfig {XMonad.modMask = mod4Mask}) = [
     ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
     ,((mod4Mask, xK_Return), spawn "urxvt")
     ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
-    --,((mod4Mask .|. shiftMask, xK_s), spawn "sudo /usr/sbin/pm-suspend")
-    --,((mod4Mask .|. shiftMask, xK_h), spawn "sudo /usr/sbin/pm-hibernate")
-    ,((mod4Mask, xK_v), spawn "gvim")
     ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
 	]
 --------------------------------------------------------------------------------
