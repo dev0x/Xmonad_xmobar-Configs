@@ -14,9 +14,10 @@ Config {
 		, Run Weather "KMSN" ["-t", "<tempF>F", "-L","-3", "-H", "77", "--normal","green","--high","red","--low","lightblue"] 36000
         , Run Memory ["-t","Mem: <usedratio>%", "-l", "green", "--normal","orange","--high","red"] 40
         , Run CpuFreq ["-t","<cpu0>|<cpu1>|<cpu2>|<cpu3>","-L","0","-H","2","-l","lightblue","-n","#009900","-h","red"] 30
+		, Run Battery ["-t","<left>% / <timeleft>","-L","40","-H","75","-h","green","-n","yell","-l","red"] 10
         , Run StdinReader
     ]
     , sepChar = "%"
     , alignSep = "}{"
-    , template = " %StdinReader% }{ <fc=#0033ff>|</fc> %multicpu% @ %cpufreq% <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc>%KMSN%"
+    , template = " %StdinReader% }{ <fc=#0033ff>|</fc> %multicpu% <fc=#0033FF>|</fc> %battery% <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc>%KMSN%"
 }

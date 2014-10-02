@@ -93,9 +93,10 @@ myLayoutHook	=  onWorkspace "7:im" imLayout
 		webL = avoidStruts $ (tabLayout  ||| tiled ||| reflectHoriz tiled ||| Grid ||| Full)
 		 
 --------------------------------------------------------------------------------
-myStartupHook :: X ()
-myStartupHook = do
-				spawnOnce "xmobar -x 1 ~/.xmobarrc2"
+--myStartupHook :: X ()
+--myStartupHook = do
+--		spawnOnce "xmobar -x 1 ~/.xmobarrc2"
+myStartupHook = return()
 
 customPP :: PP
 customPP = defaultPP {
@@ -114,7 +115,7 @@ main = do
   xmonad	$ defaultConfig { 
 	terminal = myTerminal
 	,workspaces = myWorkspaces
-    ,manageHook = myManageHook
+	,manageHook = myManageHook
 	,normalBorderColor = myNormalBorderColor
 	,focusedBorderColor = myFocusedBorderColor
 	,logHook = myLogHook xmproc
@@ -126,11 +127,14 @@ main = do
 myKeys x = M.union (M.fromList (newKeys x)) (keys defaultConfig x)
 --------------------------------------------------------------------------------
 newKeys conf@(XConfig {XMonad.modMask = mod4Mask}) = [    
-    ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
-    ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
-    ,((mod4Mask, xK_Return), spawn "urxvt")
-    ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
-    ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
+	    ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
+	    ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
+	    ,((mod4Mask.|.shiftMask, xK_l), spawn "slock")
+	    ,((mod4Mask.|.shiftMask, xK_s), spawn "sudo pm-suspend")
+	    ,((mod4Mask.|.shiftMask, xK_h), spawn "sudo pm-hibernate")
+	    ,((mod4Mask, xK_Return), spawn "urxvt")
+	    ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
+	    ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
 	]
 --------------------------------------------------------------------------------
 
