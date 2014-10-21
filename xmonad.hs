@@ -1,7 +1,6 @@
 -- Import Statements
 import XMonad
 import qualified Data.Map as M
---import XMonad.Util.EZConfig(additionalKeys)
 import Graphics.X11.Xlib
 import System.IO
 import System.Exit
@@ -10,13 +9,12 @@ import System.Exit
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.SetWMName
---import XMonad.Hooks
+import XMonad.Hooks.Place
 
 -- utils
 import XMonad.Util.SpawnOnce
 import XMonad.Util.Run(spawnPipe)
 import XMonad.Util.Scratchpad
---import XMonad.Util
 
 --layouts
 import XMonad.Layout.NoBorders
@@ -26,7 +24,11 @@ import XMonad.Layout.IM
 import XMonad.Layout.Tabbed
 import XMonad.Layout.PerWorkspace(onWorkspace)
 import XMonad.Layout.Grid
---import XMonad.Layout
+import XMonad.Layout.ThreeColumns
+import XMonad.Layout.SimplestFloat
+import XMonad.Layout.Spacing
+--actions
+import XMonad.Actions.CycleWS
 
 
 -- Data.Ratio due to the IM layout
@@ -40,7 +42,7 @@ myTerminal = "urxvt"
 --------------------------------------------------------------------------------
 --Workspaces
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["1:tmux","2:web","3:web2","4:code","5:code","6:code","7:im", "8:term", "9:term1"]
+myWorkspaces = ["tmux","web","web2","code","code1","code2","im","term","term1","moo!and!oink"]
 
 --------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
@@ -52,14 +54,16 @@ myFocusedBorderColor = "#009900"
 myManageHook = composeAll . concat $
    [ [ className =? "Chromium" --> doShift "web" ]
    , [ className =? "Firefox-bin" --> doShift "web2"]
-   , [ className =? "Hangouts"    --> doShift "im" ]
-   , [(className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
+   , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd"    --> (placeHook chatPlacement <+> doShift "7:im" <+> doFloat) ]
+   , [ (className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
    ]
    -- in a composeAll hook, you'd use: fmap ("VLC" `isInfixOf`) title --> doFloat
-  where myFloatsC = ["Hangouts", "Xmessage"]
+  where myFloatsC = ["Hangouts", "donkey-doodle"]
         myMatchAnywhereFloatsC = ["Google","hangouts"]
         myMatchAnywhereFloatsT = ["VLC"] -- this one is silly for only one string!
 
+chatPlacement :: Placement
+chatPlacement = withGaps(0,20,20,0) (inBounds (smart(1,1)))
 --------------------------------------------------------------------------------
 --logHook
 myLogHook :: Handle -> X ()
@@ -73,12 +77,13 @@ myTheme = defaultTheme { decoHeight = 16
 						, inactiveBorderColor = "#000000"
 						}
 --------------------------------------------------------------------------------
-myLayoutHook	=  onWorkspace "7:im" imLayout 
-				 $ onWorkspace "2:web" webL
-				 $ onWorkspace "3:web2" webL
+myLayoutHook	=  onWorkspace "im" imLayout 
+				 $ onWorkspace "web" webL
+				 $ onWorkspace "web2" webL
 				 $ standardLayouts 
 		where
-		standardLayouts =	avoidStruts $ (tiled ||| reflectTiled ||| Mirror tiled ||| Grid ||| Full)
+		threeLayout = ThreeCol 1 (3/100) (1/2)
+		standardLayouts =	avoidStruts $ (tiled ||| reflectTiled ||| Mirror tiled ||| Grid ||| Full ||| threeLayout)
  
 		--Layouts
 		tiled			= smartBorders (ResizableTall 1 (2/100) (1/2) [])
@@ -91,6 +96,7 @@ myLayoutHook	=  onWorkspace "7:im" imLayout
 		 
 		--Web Layout
 		webL = avoidStruts $ (tabLayout  ||| tiled ||| reflectHoriz tiled ||| Grid ||| Full)
+		gimpLayout = smartBorders(avoidStruts(ThreeColMid 1 (3/100) (3/4)))
 		 
 --------------------------------------------------------------------------------
 myStartupHook :: X ()
@@ -128,9 +134,10 @@ myKeys x = M.union (M.fromList (newKeys x)) (keys defaultConfig x)
 newKeys conf@(XConfig {XMonad.modMask = mod4Mask}) = [    
     ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
     ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
+    ,((mod4Mask.|.shiftMask, xK_l), spawn "slock")
     ,((mod4Mask, xK_Return), spawn "urxvt")
-    ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
+    ,((mod4Mask, xK_m), spawn "chromium-browser --app='https://mail.google.com'")
     ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
+    ,((mod4Mask, xK_0), nextWS)
 	]
 --------------------------------------------------------------------------------
-

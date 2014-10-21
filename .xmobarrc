@@ -4,19 +4,14 @@ Config {
     , border = TopB
     , bgColor = "#000000"
     , fgColor = "#00FFFF"
-    , position = TopW R 100
-    , persistent = False
-    , lowerOnStart = True 
-    , hideOnStart = False
-    , allDesktops = False
-    , overrideRedirect = True
+    , position = Top
+    , lowerOnStart = True
     , commands = [ Run MultiCpu ["-t", "CPUs:<total0>% <total1>% <total2>% <total3>%","-L","3","-H","50","-l","green","--normal","orange","--high","red"]   40
 		, Run Weather "KMSN" ["-t", "<tempF>F", "-L","-3", "-H", "77", "--normal","green","--high","red","--low","lightblue"] 36000
         , Run Memory ["-t","Mem: <usedratio>%", "-l", "green", "--normal","orange","--high","red"] 40
-        , Run CpuFreq ["-t","<cpu0>|<cpu1>|<cpu2>|<cpu3>","-L","0","-H","2","-l","lightblue","-n","#009900","-h","red"] 30
         , Run StdinReader
     ]
     , sepChar = "%"
     , alignSep = "}{"
-    , template = " %StdinReader% }{ <fc=#0033ff>|</fc> %multicpu% @ %cpufreq% <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc>%KMSN%"
+    , template = " %StdinReader% }{ <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc>%KMSN%"
 }
