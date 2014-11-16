@@ -10,7 +10,7 @@ import System.Exit
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.SetWMName
---import XMonad.Hooks
+import XMonad.Hooks.Place
 
 -- utils
 import XMonad.Util.SpawnOnce
@@ -26,7 +26,11 @@ import XMonad.Layout.IM
 import XMonad.Layout.Tabbed
 import XMonad.Layout.PerWorkspace(onWorkspace)
 import XMonad.Layout.Grid
---import XMonad.Layout
+import XMonad.Layout.ThreeColumns
+import XMonad.Layout.Spacing
+import XMonad.Layout.SimplestFloat
+--actions
+import XMonad.Actions.CycleWS
 
 
 -- Data.Ratio due to the IM layout
@@ -40,25 +44,27 @@ myTerminal = "urxvt"
 --------------------------------------------------------------------------------
 --Workspaces
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["1:tmux","2:web","3:web2","4:code","5:code","6:code","7:im", "8:term", "9:term1"]
+myWorkspaces = ["tmux","web","web2","code","code1","code2","im","term","term1","melp"]
 
 --------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
-myNormalBorderColor = "#808080"
+myNormalBorderColor = "#000000"
 myFocusedBorderColor = "#009900"
+myBorderWidth = 1
 
 --------------------------------------------------------------------------------
--- MangeDocks --> ManageHook 
 myManageHook = composeAll . concat $
    [ [ className =? "Chromium" --> doShift "web" ]
-   , [ className =? "Firefox-bin" --> doShift "web2"]
-   , [ className =? "Hangouts"    --> doShift "im" ]
-   , [(className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
+   , [ className =? "Gimp" --> doFloat]
+   , [ className =? "steam" --> doFloat]
+   , [ className =? "Steam" --> doFloat]
+   , [ (className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
+   , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd" --> (placeHook chatPlacement <+> doFloat)]
    ]
-   -- in a composeAll hook, you'd use: fmap ("VLC" `isInfixOf`) title --> doFloat
-  where myFloatsC = ["Hangouts", "Xmessage"]
-        myMatchAnywhereFloatsC = ["Google","hangouts"]
-        myMatchAnywhereFloatsT = ["VLC"] -- this one is silly for only one string!
+
+chatPlacement :: Placement
+chatPlacement = withGaps (0,20,20,0) (inBounds (smart (1,1)))
+
 
 --------------------------------------------------------------------------------
 --logHook
@@ -67,30 +73,34 @@ myLogHook h = dynamicLogWithPP $ customPP {ppOutput = hPutStrLn h}
 
 --- Theme For Tabbed layout
 myTheme = defaultTheme { decoHeight = 16
-						, activeColor = "#a6c292"
-						, activeBorderColor = "#a6c292"
-						, activeTextColor = "#000000"
-						, inactiveBorderColor = "#000000"
+						, activeColor = "#000000"
+						, activeBorderColor = "#A6C292"
+						, activeTextColor = "#CEFFAC"
+						, inactiveColor = "#000000"
+						, inactiveBorderColor = "#7C7C7C"
+						, inactiveTextColor = "#EEEEEE"
 						}
 --------------------------------------------------------------------------------
-myLayoutHook	=  onWorkspace "7:im" imLayout 
-				 $ onWorkspace "2:web" webL
-				 $ onWorkspace "3:web2" webL
+myLayoutHook	=  onWorkspace "im" imLayout 
+				 $ onWorkspace "web" webL
+				 $ onWorkspace "web2" webL
+				 $ onWorkspace "melp" steam 
 				 $ standardLayouts 
 		where
-		standardLayouts =	avoidStruts $ (tiled ||| reflectTiled ||| Mirror tiled ||| Grid ||| Full)
+		standardLayouts =	avoidStruts $ (tiled ||| Mirror tiled ||| Grid ||| ThreeCol 1 (3/100) (1/2) ||| Full)
  
 		--Layouts
 		tiled			= smartBorders (ResizableTall 1 (2/100) (1/2) [])
 		reflectTiled	= (reflectHoriz tiled)
 		tabLayout		= (tabbed shrinkText myTheme)
 		full			= noBorders Full
+		steam			= simplestFloat
  
 		--Im Layout
-		imLayout = withIM (1/10) (Role "roster") (standardLayouts)
+		imLayout = withIM (1%10) (Role "roster") (standardLayouts)
 		 
 		--Web Layout
-		webL = avoidStruts $ (tabLayout  ||| tiled ||| reflectHoriz tiled ||| Grid ||| Full)
+		webL = avoidStruts $ (tabLayout ||| tiled ||| reflectHoriz tiled ||| Grid ||| Full)
 		 
 --------------------------------------------------------------------------------
 --myStartupHook :: X ()
@@ -100,11 +110,11 @@ myStartupHook = return()
 
 customPP :: PP
 customPP = defaultPP {
-			ppHidden = xmobarColor "#00FF00" ""
+			ppHidden = xmobarColor "#959595" ""
 			, ppCurrent = xmobarColor "#859900" "" . wrap "[" "]" 
 			, ppUrgent = xmobarColor "#FF0000" "" . wrap "*" "*"
 			, ppLayout = xmobarColor "#2AA198" "" 
-			, ppTitle = xmobarColor "#00FF00" "" . shorten 80
+			, ppTitle = xmobarColor "#00FF00" "" . shorten 100
 			, ppSep = "<fc=#0033FF> | </fc>"
 		} 
  
@@ -118,6 +128,7 @@ main = do
 	,manageHook = myManageHook
 	,normalBorderColor = myNormalBorderColor
 	,focusedBorderColor = myFocusedBorderColor
+	,borderWidth = myBorderWidth
 	,logHook = myLogHook xmproc
 	,layoutHook = myLayoutHook
 	,keys = myKeys
@@ -131,10 +142,9 @@ newKeys conf@(XConfig {XMonad.modMask = mod4Mask}) = [
 	    ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
 	    ,((mod4Mask.|.shiftMask, xK_l), spawn "slock")
 	    ,((mod4Mask.|.shiftMask, xK_s), spawn "sudo pm-suspend")
-	    ,((mod4Mask.|.shiftMask, xK_h), spawn "sudo pm-hibernate")
 	    ,((mod4Mask, xK_Return), spawn "urxvt")
 	    ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
+	    ,((mod4Mask, xK_0), nextWS)
 	    ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
 	]
 --------------------------------------------------------------------------------
-
