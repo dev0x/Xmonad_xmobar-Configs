@@ -1,7 +1,6 @@
 -- Import Statements
 import XMonad
 import qualified Data.Map as M
---import XMonad.Util.EZConfig(additionalKeys)
 import Graphics.X11.Xlib
 import System.IO
 import System.Exit
@@ -11,6 +10,7 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.Place
+import XMonad.Hooks.FadeInactive
 
 -- utils
 import XMonad.Util.SpawnOnce
@@ -29,9 +29,10 @@ import XMonad.Layout.Grid
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.Spacing
 import XMonad.Layout.SimplestFloat
+import XMonad.Layout.Magnifier
+
 --actions
 import XMonad.Actions.CycleWS
-
 
 -- Data.Ratio due to the IM layout
 import Data.Ratio ((%))
@@ -44,7 +45,7 @@ myTerminal = "urxvt"
 --------------------------------------------------------------------------------
 --Workspaces
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["tmux","web","web2","code","code1","code2","im","term","term1","melp"]
+myWorkspaces = ["tmux","web","web2","code","code1","code2","im","term","term1","steam"]
 
 --------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
@@ -63,7 +64,7 @@ myManageHook = composeAll . concat $
    ]
 
 chatPlacement :: Placement
-chatPlacement = withGaps (0,20,20,0) (inBounds (smart (1,1)))
+chatPlacement = withGaps (0,16,1,0) (inBounds (smart (1,1)))
 
 
 --------------------------------------------------------------------------------
@@ -84,29 +85,29 @@ myTheme = defaultTheme { decoHeight = 16
 myLayoutHook	=  onWorkspace "im" imLayout 
 				 $ onWorkspace "web" webL
 				 $ onWorkspace "web2" webL
-				 $ onWorkspace "melp" steam 
+				 $ onWorkspace "steam" steam 
 				 $ standardLayouts 
 		where
-		standardLayouts =	avoidStruts $ (tiled ||| Mirror tiled ||| Grid ||| ThreeCol 1 (3/100) (1/2) ||| Full)
+		standardLayouts =	avoidStruts $ (tiled ||| Mirror tiled ||| Grid ||| magnifier (Tall 1 (3/100) (1/2)) ||| ThreeCol 1 (3/100) (1/2) ||| Full)
  
 		--Layouts
 		tiled			= smartBorders (ResizableTall 1 (2/100) (1/2) [])
 		reflectTiled	= (reflectHoriz tiled)
 		tabLayout		= (tabbed shrinkText myTheme)
 		full			= noBorders Full
-		steam			= simplestFloat
+		steam			= noBorders simplestFloat
  
 		--Im Layout
 		imLayout = withIM (1%10) (Role "roster") (standardLayouts)
 		 
 		--Web Layout
-		webL = avoidStruts $ (tabLayout ||| tiled ||| reflectHoriz tiled ||| Grid ||| Full)
+		webL = avoidStruts $ (tabLayout ||| tiled ||| reflectHoriz tiled ||| Grid ||| magnifier (Tall 1 (3/100) (1/2)) ||| Full)
 		 
 --------------------------------------------------------------------------------
---myStartupHook :: X ()
 --myStartupHook = do
 --		spawnOnce "xmobar -x 1 ~/.xmobarrc2"
-myStartupHook = return()
+myStartupHook :: X ()
+myStartupHook = setWMName "LG3D"
 
 customPP :: PP
 customPP = defaultPP {
@@ -131,20 +132,30 @@ main = do
 	,borderWidth = myBorderWidth
 	,logHook = myLogHook xmproc
 	,layoutHook = myLayoutHook
+	,modMask = myModMask
 	,keys = myKeys
-	,startupHook = myStartupHook >> setWMName "LG3D"
+	,startupHook = myStartupHook
   } 
+
+
+myModMask = mod1Mask -- leave as alt
 
 myKeys x = M.union (M.fromList (newKeys x)) (keys defaultConfig x)
 --------------------------------------------------------------------------------
-newKeys conf@(XConfig {XMonad.modMask = mod4Mask}) = [    
-	    ((mod4Mask, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
-	    ,((mod4Mask, xK_f), spawn "urxvt -e xcalc")
-	    ,((mod4Mask.|.shiftMask, xK_l), spawn "slock")
-	    ,((mod4Mask.|.shiftMask, xK_s), spawn "sudo pm-suspend")
-	    ,((mod4Mask, xK_Return), spawn "urxvt")
-	    ,((mod4Mask, xK_m), spawn "chromium --app='https://mail.google.com'")
-	    ,((mod4Mask, xK_0), nextWS)
+newKeys conf@(XConfig {XMonad.modMask = modm}) = [    
+	    ((modm, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
+	    ,((modm, xK_f), spawn "urxvt -e xcalc")
+	    ,((modm.|.shiftMask, xK_l), spawn "xlock -mode blank")
+	    ,((modm.|.shiftMask, xK_s), spawn "sudo pm-suspend")
+	    ,((modm, xK_Return), spawn "urxvt")
+	    ,((modm, xK_m), spawn "chromium --app='https://mail.google.com'")
+	    ,((modm, xK_0), nextWS)
 	    ,((0, xK_Print), spawn "sleep 0.2; scrot -s")
+
+		, ((mod4Mask .|. controlMask              , xK_equal), sendMessage MagnifyMore)
+		, ((mod4Mask .|. controlMask              , xK_minus), sendMessage MagnifyLess)
+--		, ((mod4Mask .|. controlMask              , xK_o    ), sendMessage ToggleOff  )
+--		, ((mod4Mask .|. controlMask .|. shiftMask, xK_o    ), sendMessage ToggleOn   )
+		, ((mod4Mask .|. controlMask              , xK_m    ), sendMessage Toggle     )  
 	]
 --------------------------------------------------------------------------------

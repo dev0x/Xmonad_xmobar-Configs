@@ -17,10 +17,14 @@ Config {
         , Run Memory ["-t","Mem: <usedratio>%", "-l", "green", "--normal","orange","--high","red"] 40
         , Run CpuFreq ["-t","<cpu0>|<cpu1>|<cpu2>|<cpu3>","-L","0","-H","2","-l","lightblue","-n","#009900","-h","red"] 30
 		, Run Battery
-				["-t", "<leftbar> <timeleft>",
-				"-L", "25", "-H", "75", "-p", "3",
-				"-l", "red", "-m", "blue", "-h", "green"
-				,"--", "capacity"
+				["--template", "<acstatus>"
+				, "-L", "25", "-H", "75", "-p", "3"
+				, "-l", "red", "-m", "blue", "-h", "green"
+				, "--"	-- Battery specific options 
+					, "-o" , "<leftbar><timeleft>"						-- discharging status
+					, "-O" , "<fc=#DAA520>Charging</fc>(<timeleft>)"	-- AC 'on' status
+					, "-i" , "<fc=#006000>Charged</fc>"		-- charged status
+					
 				] 30
         , Run StdinReader
 	]
