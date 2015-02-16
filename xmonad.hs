@@ -63,16 +63,16 @@ myManageHook = composeAll . concat $
         myMatchAnywhereFloatsT = ["VLC"] -- this one is silly for only one string!
 
 chatPlacement :: Placement
-chatPlacement = withGaps(0,20,20,0) (inBounds (smart(1,1)))
+chatPlacement = withGaps(0,16,1,0) (inBounds (smart(0,1)))
 --------------------------------------------------------------------------------
 --logHook
 myLogHook :: Handle -> X ()
-myLogHook h = dynamicLogWithPP $ customPP {ppOutput = hPutStrLn h}
+myLogHook h = dynamicLogWithPP $ dev0xPP {ppOutput = hPutStrLn h}
 
 --- Theme For Tabbed layout
 myTheme = defaultTheme { decoHeight = 16
-						, activeColor = "#a6c292"
-						, activeBorderColor = "#a6c292"
+						, activeColor = "#A6C292"
+						, activeBorderColor = "#A6C292"
 						, activeTextColor = "#000000"
 						, inactiveBorderColor = "#000000"
 						}
@@ -103,10 +103,11 @@ myStartupHook :: X ()
 myStartupHook = do
 				spawnOnce "xmobar -x 1 ~/.xmobarrc2"
 
-customPP :: PP
-customPP = defaultPP {
-			ppHidden = xmobarColor "#00FF00" ""
-			, ppCurrent = xmobarColor "#859900" "" . wrap "[" "]" 
+dev0xPP :: PP
+dev0xPP = defaultPP {
+			ppHidden = xmobarColor "#4e4e4e" ""
+			, ppCurrent = xmobarColor "#AFFF00" "" . wrap "[" "]" 
+			, ppVisible = xmobarColor "#808080" "" . wrap "-" "-"
 			, ppUrgent = xmobarColor "#FF0000" "" . wrap "*" "*"
 			, ppLayout = xmobarColor "#2AA198" "" 
 			, ppTitle = xmobarColor "#00FF00" "" . shorten 80
