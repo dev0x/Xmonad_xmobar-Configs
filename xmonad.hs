@@ -45,7 +45,7 @@ myTerminal = "urxvt"
 --------------------------------------------------------------------------------
 --Workspaces
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["tmux","web","web2","code","code1","code2","im","term","term1","steam"]
+myWorkspaces = ["tmux","web","web2","code","code1","code2","dev server","term","term1","steam"]
 
 --------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
@@ -145,7 +145,7 @@ myKeys x = M.union (M.fromList (newKeys x)) (keys defaultConfig x)
 newKeys conf@(XConfig {XMonad.modMask = modm}) = [    
 	    ((modm, xK_p), spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses a colorscheme with dmenu
 	    ,((modm, xK_f), spawn "urxvt -e xcalc")
-	    ,((modm.|.shiftMask, xK_l), spawn "xlock -mode blank")
+	    ,((modm.|.shiftMask, xK_l), spawn "xtrlock -b")
 	    ,((modm.|.shiftMask, xK_s), spawn "sudo pm-suspend")
 	    ,((modm, xK_Return), spawn "urxvt")
 	    ,((modm, xK_m), spawn "chromium --app='https://mail.google.com'")
