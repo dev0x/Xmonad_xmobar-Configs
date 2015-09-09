@@ -108,7 +108,7 @@ myLayoutHook  =  onWorkspace "im" imLayout
 --------------------------------------------------------------------------------
 myStartupHook :: X ()
 myStartupHook = do
-        setWMName "LG3D", 
+        setWMName "LG3D" 
         spawnOnce "xmobar -x 1 ~/.xmobarrc2"
 
 dev0xPP :: PP
