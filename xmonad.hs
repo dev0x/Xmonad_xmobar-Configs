@@ -64,7 +64,7 @@ myModMask = mod1Mask
 --------------------------------------------------------------------------------
 --Workspaces
 myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["tmux","web","web2","code","code1","code2","im","term","term1","moo!and!oink"]
+myWorkspaces = ["tmux","web","web1","code","code1","code2","im","term","term1","moo!and!oink"]
 
 -------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
@@ -195,15 +195,13 @@ newKeys (XConfig {XMonad.modMask = modm}) =
         ,((modm.|.shiftMask      ,xK_l)          ,spawn "xscreensaver-command --lock")
         ,((modm.|.shiftMask      ,xK_BackSpace)  ,removeWorkspace)
         ,((modm.|.shiftMask      ,xK_v)          ,selectWorkspace myXPConfig)
-
         ,((modm                  ,xK_m)          ,withWorkspace myXPConfig (windows . W.shift))
         ,((modm.|.shiftMask      ,xK_m)          ,withWorkspace myXPConfig (windows . copy))
-
         ,((modm.|.shiftMask      ,xK_r)          ,renameWorkspace myXPConfig)
         ,((modm                  ,xK_a)          ,addWorkspacePrompt myXPConfig)
     ]
-    ++
+    ++ -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-DynamicWorkspaces.html 
     zip (zip (repeat (modm)) [xK_1..xK_9]) (map (withNthWorkspace W.greedyView) [0..])
-    ++
+    ++ -- revise for convention 
     zip (zip (repeat (modm .|. shiftMask)) [xK_1..xK_9]) (map (withNthWorkspace W.shift) [0..])
 --------------------------------------------------------------------------------
