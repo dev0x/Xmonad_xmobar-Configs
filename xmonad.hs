@@ -73,10 +73,24 @@ myNormalBorderColor = "#808080"
 myFocusedBorderColor :: String
 myFocusedBorderColor = "#009900"
 
---Define to def...
+--XPConfig 
 myXPConfig :: XPConfig
-myXPConfig = defaultXPConfig
+myXPConfig = defaultXPConfig {
+    borderColor = "#009900"
+}
 
+--showmenu - dmenu - which I've broken the config/formatting out - why? because fuck you, that's why
+showmenu :: MonadIO m => m()
+showmenu = spawn ("dmenu_run" ++ dmenuFormatString)
+
+dmenuFormatString :: String
+dmenuFormatString = concat
+    [     " -nb '#000000' " -- black
+        , " -nf '#3289BD' " -- ?? 
+        , " -sb '#42CBF5' " -- blue
+        , " -sf '#F46D43' " -- orange 
+        , " -fn 'envypn' "  -- fc-match envypn YIELDS envypn7x13.pcf.gz: "envpn" "Regular" 
+    ]
 --------------------------------------------------------------------------------
 -- MangeDocks --> ManageHook 
 myManageHook :: ManageHook 
@@ -134,22 +148,20 @@ myLayoutHook = onWorkspace "im" imLayout
              $ onWorkspace "web1" webLayout
              $ standardLayouts 
     where
+    --Layouts
     standardLayouts     = avoidStruts $ (tiled ||| magLayout ||| reflectTiled ||| Grid ||| Full ||| threeLayout)
+    --tiled
     tiled               = smartBorders (ResizableTall 1 (2/100) (1/2) [])
+    --reflectTiled
     reflectTiled        = (reflectHoriz tiled)
-
     --magnifier Layout
     magLayout           = magnifier (Tall 1 (3/100) (1/2))
-
     --tab Layout
     tabLayout           = (tabbed shrinkText myTabTheme)
-
-    --Three Columnar window layout
+    --Three Columnar 
     threeLayout         = ThreeCol 1 (3/100) (1/2)
-
     --Im Layout
     imLayout            = withIM (1%10) (Role "roster") (standardLayouts)
-     
     --Web Layout
     webLayout           = avoidStruts $ (tabLayout ||| magLayout ||| reflectTiled ||| Grid ||| Full ||| threeLayout)
      
@@ -158,6 +170,7 @@ myStartupHook :: X ()
 myStartupHook = do
         setWMName "LG3D" 
         spawnOnce "xmobar -x 1 ~/.xmobarrc2"
+        spawnOnce "xscreensaver -nosplash"
 -------------------------------------------------------------------------------
 --Run XMonad with the defaults
 main :: IO ()
@@ -184,7 +197,7 @@ myKeys x = M.union(M.fromList (newKeys x)) (keys defaultConfig x)
 newKeys  :: XConfig Layout -> [((KeyMask, KeySym), X())]
 newKeys (XConfig {XMonad.modMask = modm}) =
     [    
-        ((modm                   ,xK_p)          ,spawn "dmenu_run -nb '#3F3F3F' -nf '#DCDCCC' -sb '#7F9F7F' -sf '#DCDCCC'")  --Uses colorscheme with dmenu
+        ((modm                   ,xK_p)          ,showmenu)  --dmenu
         ,((modm                  ,xK_f)          ,spawn "urxvt -e xcalc")
         ,((modm                  ,xK_Return)     ,spawn "urxvt")
         ,((modm                  ,xK_m)          ,spawn "chromium-browser --app='https://mail.google.com'")
