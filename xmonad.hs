@@ -1,23 +1,38 @@
+{-
+ -
+ = ||+||+||+||+||+||+||+||+||+||+||+||+||+||+||+||
+ -
+ = Xmonad.hs 
+ -
+ = ||+||+||+||+||+||+||+||+||+||+||+||+||+||+||+||
+ -
+ -}
+-- Language
+{-# LANGUAGE DeriveDataTypeable, NoMonomorphismRestriction, TypeSynonymInstances, MultiParamTypeClasses,  ImplicitParams, PatternGuards #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -- Import System  
 import XMonad
 import qualified Data.Map as M
+import Data.Maybe
 import qualified XMonad.StackSet as W 
 import System.IO
 import System.Exit
 import Control.Monad
 
--- actions
+-- Actions
 import XMonad.Actions.CycleWS
 import XMonad.Actions.DynamicWorkspaces
-import XMonad.Actions.CopyWindow
--- hooks
+
+-- Hooks
 import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.ManageHelpers()
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.Place
 
---layouts
+-- Layout
 import XMonad.Layout.NoBorders
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Reflect
@@ -28,56 +43,101 @@ import XMonad.Layout.Grid
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.Magnifier
 
-
--- prompt
+-- Prompt
 import XMonad.Prompt
 
--- utils
+-- Util
 import XMonad.Util.SpawnOnce
 import XMonad.Util.Run(spawnPipe)
 import XMonad.Util.Dmenu
-
+import XMonad.Util.NamedScratchpad
 
 -- Data.Ratio -  IM layout
 import Data.Ratio((%))
 
 --------------------------------------------------------------------------------
--- self defined functions
+-- self defined function(s)
 --------------------------------------------------------------------------------
--- Quit with warning
+-- quit with warning
 quitWithWarning :: X ()    
 quitWithWarning = do
     let message = "confirm quit"
     s <- dmenu [message]
     when (s == "y") (io exitSuccess)
---------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 -- self defined variables
 --------------------------------------------------------------------------------
 --Define Terminal
 myTerminal  :: String
 myTerminal = "urxvt"
 
+myFont :: String 
+myFont = "xft:Fira Mono For Powerline:size=16"
+
 --Define MyModMask
 myModMask   :: KeyMask
 myModMask = mod1Mask 
 
+--Define borderWidth - bumping it to 2px to see if that helps with the issue with x2x
+myBorderWidth :: Dimension
+myBorderWidth = 2 
 --------------------------------------------------------------------------------
---Workspaces
-myWorkspaces :: [WorkspaceId]
-myWorkspaces = ["tmux","web","web1","code","code1","code2","im","term","term1","moo!and!oink"]
-
--------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
 myNormalBorderColor :: String
 myNormalBorderColor = "#808080"
 myFocusedBorderColor :: String
 myFocusedBorderColor = "#009900"
 
+-------------------------------------------------------------------------------
+--Workspaces
+myWorkspaceNames :: [WorkspaceId]
+myWorkspaceNames = ["tmux","web","web1","code","code1","code2","im"]
+
+--myWorkspaces :: [WorkspaceId]
+--myWorkspaces = map show [1..9 :: Int]
+
+myWorkspaces :: [WorkspaceId] -- [String]
+myWorkspaces = zipWith (++) (map show [1..]) wsnames
+    where wsnames = map ((:) ':') myWorkspaceNames
+--wsNameMap - workspaceNameMap
+wsNameMap :: M.Map WorkspaceId WorkspaceId
+wsNameMap = M.fromList $ zip myWorkspaces myWorkspaceNames
+
+--wsNameToId - workspaceName to ID function 
+wsNameToId :: M.Map WorkspaceId WorkspaceId
+wsNameToId = M.fromList $ zip myWorkspaceNames myWorkspaces
+
+-- Workspace colors map
+wsColorMap :: M.Map WorkspaceId String
+wsColorMap = M.fromList $ zip myWorkspaces
+        [ "#b58900" --yellow
+        , "#859900" --green
+        , "#dc322f" --red
+        , "#268bd2" --blue
+        , "#6c71c4" --violet
+        , "#2aa198" --cyan
+        , "#cb4b16" --orange
+        , "#d33682" --magenta
+        ]
+
 --XPConfig 
 myXPConfig :: XPConfig
-myXPConfig = defaultXPConfig {
-    borderColor = "#009900"
-}
+myXPConfig = def {
+    borderColor     = "DarkOrange"
+    , bgColor       = "#42CBF5" --blue
+    , fgColor       = "#F46D43" --orange
+    , bgHLight      = "#42CBF5" --blue
+    , fgHLight      = "#f8f8f8"
+    , position      = Bottom
+    , font          = myFont
+    , height        = 22
+    , defaultText   = []
+}  where
+   wsName wsId = case M.lookup wsId wsNameMap of
+       Nothing    -> wsId
+       Just name  -> wsId ++ ":" ++ name
+
 
 --showmenu - dmenu - which I've broken the config/formatting out - why? because fuck you, that's why
 showmenu :: MonadIO m => m()
@@ -98,36 +158,77 @@ myManageHook = composeAll . concat $
    [ [ className =? "Chromium" --> doShift "web" ]
        , [ className =? "Firefox" --> doShift "web2"]
        , [ className =? "Eclipse" --> doShift "code2" <+> doFloat]
-       , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd"    --> (placeHook chatPlacement <+> doShift "im" <+> doFloat) ] 
-       , [ appName =? "crx_knipolnnllmklapflnccelgolnpehhpl"    --> (placeHook chatPlacement <+> doFloat) ] 
+       , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd"    --> (placeHook chatPlacement <+> doFloat) ] 
+       , [ appName =? "crx_knipolnnllmklapflnccelgolnpehhpl"    --> (placeHook chatPlacement <+> doShift "im" <+> doFloat) ] 
        , [ appName =? "crx_fahmaaghhglfmonjliepjlchgpgfmobi"    --> (placeHook gmusicPlacement <+> doShift "term1" <+> doFloat) ] --gmusic 
        , [ (className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
+       , [ manageDocks ]
+       , [ manageHookScratchPad ]
    ]
 
 chatPlacement :: Placement
-chatPlacement = withGaps(0,16,1,0) (inBounds (smart(0,1)))
+chatPlacement   = withGaps(0,16,5,10) (smart(0,1))
 
 gmusicPlacement :: Placement
 gmusicPlacement = withGaps(0,16,1,0) (inBounds (smart(0,1)))
---------------------------------------------------------------------------------
---logHook
-myLogHook :: Handle -> X ()
-myLogHook h = dynamicLogWithPP $ dev0xPP {ppOutput = hPutStrLn h} 
 
+-------------------------------------------------------------------------------
+--dev0xPP - Pretty printing for my settings
 dev0xPP :: PP
-dev0xPP = defaultPP {
-      ppHidden = xmobarColor "#4e4e4e" ""
-      , ppCurrent = xmobarColor "#AFFF00" "" . wrap "[" "]" 
-      , ppVisible = xmobarColor "#808080" "" . wrap "-" "-"
-      , ppUrgent = xmobarColor "#FF0000" "" . wrap "*" "*"
-      , ppLayout = xmobarColor "#2AA198" "" 
-      , ppTitle = xmobarColor "#00FF00" "" . shorten 80
-      , ppSep = "<fc=#0033FF> | </fc>"
+dev0xPP = def {
+      ppHidden      = xmobarColor "#4E4E4E" "" . noScratchPad
+--      , ppCurrent   = xmobarColor "#AFFF00" "" . wrap "[" "]" 
+      , ppCurrent   = \wsId -> xmobarColor "#AFFF00" (ppMultiColor wsId) . pad . wrap "[" "]" $ wsName wsId
+      , ppVisible   = xmobarColor "#808080" "" . wrap "-" "-"
+      , ppUrgent    = xmobarColor "#FF0000" "" . wrap "*" "*"
+      , ppLayout    = xmobarColor "#2AA198" ""
+      , ppTitle     = xmobarColor "#00FF00" "" . shorten 80
+      , ppSep       = "<fc=#0033FF> | </fc>"
     } 
+   where
+   noScratchPad ws = if ws == "NSP" then "" else pad ws
+   ppMultiColor wsId = fromMaybe "#586e75" (M.lookup wsId wsColorMap)
+   wsName wsId = case M.lookup wsId wsNameMap of
+                                Nothing    -> wsId
+                                Just name  -> wsId ++ ":" ++ name
+--------------------------------------------------------------------------------
+--scratchpads
+myScratchpads :: [NamedScratchpad]
+myScratchpads =
+  [ NS  "htop"
+        (myTerminal ++ " -e htop")
+        (title =? "htop")
+        (customFloating $ W.RationalRect (1/6) (1/6) (2/3) (2/3))
+
+  , NS  "scratchr" 
+        (myTerminal ++ " -name scratchr")
+        (appName =? "scratchr") 
+        (customFloating $ W.RationalRect (0.65) (0.4) (0.45) (0.60))
+
+  , NS  "scratchl" 
+        (myTerminal ++ " -name scratchl")
+        (appName =? "scratchl") 
+        (customFloating $ W.RationalRect (0.0) (0.45) (0.45) (0.60))
+
+  , NS  "ranger"
+        (myTerminal ++ " -e ranger")
+        (title =? "ranger")
+        (customFloating $ W.RationalRect (1/6) (1/6) (2/3) (2/3))
+
+  , NS  "chat"
+        (myTerminal ++ " -name 'NSP-chat'")
+        (title =? "NSP-chat")
+        (customFloating $ W.RationalRect (1/6) (1/10) (0.40) (0.40)) 
+  ]
+
+--------------------------------------------------------------------------------
+--manageScratchPadHook for scratchPads
+manageHookScratchPad :: ManageHook
+manageHookScratchPad = namedScratchpadManageHook myScratchpads
 
 --- Theme For Tabbed layout
 myTabTheme :: Theme 
-myTabTheme = defaultTheme { decoHeight = 16
+myTabTheme = def { decoHeight = 16
             , activeColor = "#000000"
             , activeBorderColor = "#A6C292"
             , activeTextColor = "#CEFFAC"
@@ -143,13 +244,14 @@ myTabTheme = defaultTheme { decoHeight = 16
 {-
 myLayoutHook :: onWorkspace() 
 -}
-myLayoutHook = onWorkspace "im" imLayout 
+myLayoutHook = onWorkspace "tmux" tmuxLayout
+             $ onWorkspace "im" imLayout 
              $ onWorkspace "web" webLayout
              $ onWorkspace "web1" webLayout
              $ standardLayouts 
     where
     --Layouts
-    standardLayouts     = avoidStruts $ (tiled ||| magLayout ||| reflectTiled ||| Grid ||| Full ||| threeLayout)
+    standardLayouts     = avoidStruts $ (reflectTiled ||| magLayout ||| (tabbed shrinkText myTabTheme) ||| Grid ||| Full ||| threeLayout)
     --tiled
     tiled               = smartBorders (ResizableTall 1 (2/100) (1/2) [])
     --reflectTiled
@@ -160,61 +262,76 @@ myLayoutHook = onWorkspace "im" imLayout
     tabLayout           = (tabbed shrinkText myTabTheme)
     --Three Columnar 
     threeLayout         = ThreeCol 1 (3/100) (1/2)
+    --tmux layout
+    tmuxLayout          = smartBorders $ avoidStruts (magLayout ||| Grid ||| Full) 
     --Im Layout
     imLayout            = withIM (1%10) (Role "roster") (standardLayouts)
     --Web Layout
     webLayout           = avoidStruts $ (tabLayout ||| magLayout ||| reflectTiled ||| Grid ||| Full ||| threeLayout)
      
 -------------------------------------------------------------------------------
+--myStartupHook
 myStartupHook :: X ()
 myStartupHook = do
         setWMName "LG3D" 
-        spawnOnce "xmobar -x 1 ~/.xmobarrc2"
         spawnOnce "xscreensaver -nosplash"
+
+-------------------------------------------------------------------------------
+--myLogHook
+myLogHook :: Handle -> X ()
+myLogHook h = dynamicLogWithPP $ dev0xPP {ppOutput = hPutStrLn h}
+
 -------------------------------------------------------------------------------
 --Run XMonad with the defaults
 main :: IO ()
 main = do
-  xmobarProc <- spawnPipe "xmobar -x 0 ~/.xmobarrc" 
-  xmonad $ defaultConfig { 
+  xmobarHandle     <- spawnPipe "xmobar -x 0 ~/.xmobarrc0" 
+  --xmobarRight    <- spawnPipe "xmobar -x 1 ~/.xmobarrc1"
+  xmonad $ def { 
       focusedBorderColor = myFocusedBorderColor
       ,normalBorderColor = myNormalBorderColor
-      ,logHook = myLogHook xmobarProc
-      ,layoutHook = myLayoutHook
-      ,manageHook = myManageHook
-      ,modMask = myModMask
-      ,keys = myKeys 
-      ,startupHook = myStartupHook
-      ,terminal = myTerminal
-      ,workspaces = myWorkspaces
+      ,borderWidth       = myBorderWidth
+      ,logHook          = myLogHook xmobarHandle
+      ,layoutHook       = myLayoutHook
+      ,manageHook       = manageDocks <+> myManageHook <+> manageHookScratchPad 
+      ,handleEventHook  = docksEventHook <+> handleEventHook def
+      ,modMask          = myModMask
+      ,keys             = myKeys 
+      ,startupHook      = myStartupHook
+      ,terminal         = myTerminal
+      ,workspaces       = myWorkspaces
   } 
 
 -------------------------------------------------------------------------------
 --Keys
 myKeys   :: XConfig Layout -> M.Map (KeyMask, KeySym) (X())
-myKeys x = M.union(M.fromList (newKeys x)) (keys defaultConfig x)
+myKeys x = M.union(M.fromList (newKeys x)) (keys def x)
 -- newKeys is self defined configuration to which then gets merged into myKeys to then be pulled into xmonad conf
 newKeys  :: XConfig Layout -> [((KeyMask, KeySym), X())]
 newKeys (XConfig {XMonad.modMask = modm}) =
     [    
         ((modm                   ,xK_p)          ,showmenu)  --dmenu
+        ,((modm                  ,xK_b)          ,sendMessage ToggleStruts) 
         ,((modm                  ,xK_f)          ,spawn "urxvt -e xcalc")
         ,((modm                  ,xK_Return)     ,spawn "urxvt")
         ,((modm                  ,xK_m)          ,spawn "chromium-browser --app='https://mail.google.com'")
         ,((0                     ,xK_Print)      ,spawn "sleep 0.5; scrot -s")
+        ,((modm.|.shiftMask      ,xK_l)          ,spawn "xscreensaver-command --lock")
+-- Workspace selection
         ,((modm                  ,xK_0)          ,nextWS)
         ,((modm.|.shiftMask      ,xK_0)          ,prevWS)
         ,((modm.|.shiftMask      ,xK_q)          ,quitWithWarning)
-        ,((modm.|.shiftMask      ,xK_l)          ,spawn "xscreensaver-command --lock")
-        ,((modm.|.shiftMask      ,xK_BackSpace)  ,removeWorkspace)
-        ,((modm.|.shiftMask      ,xK_v)          ,selectWorkspace myXPConfig)
-        ,((modm                  ,xK_m)          ,withWorkspace myXPConfig (windows . W.shift))
-        ,((modm.|.shiftMask      ,xK_m)          ,withWorkspace myXPConfig (windows . copy))
+        ,((modm.|.shiftMask      ,xK_BackSpace)  ,removeWorkspace)  --removeWorkspace 
+        ,((modm                  ,xK_v)          ,selectWorkspace myXPConfig)
+        ,((modm.|.shiftMask      ,xK_m)          ,withWorkspace   myXPConfig (windows . W.shift)) --MOVE
         ,((modm.|.shiftMask      ,xK_r)          ,renameWorkspace myXPConfig)
         ,((modm                  ,xK_a)          ,addWorkspacePrompt myXPConfig)
+        ,((modm                  ,xK_e)          ,namedScratchpadAction myScratchpads "ranger")
+        ,((modm                  ,xK_f)          ,namedScratchpadAction myScratchpads "scratchr")
+        ,((modm.|.shiftMask      ,xK_f)          ,namedScratchpadAction myScratchpads "scratchl")
     ]
     ++ -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-DynamicWorkspaces.html 
     zip (zip (repeat (modm)) [xK_1..xK_9]) (map (withNthWorkspace W.greedyView) [0..])
-    ++ -- revise for convention 
-    zip (zip (repeat (modm .|. shiftMask)) [xK_1..xK_9]) (map (withNthWorkspace W.shift) [0..])
+    ++ -- revise for convention? 
+    zip (zip (repeat (modm.|.shiftMask)) [xK_1..xK_9]) (map (withNthWorkspace W.shift) [0..])
 --------------------------------------------------------------------------------
