@@ -81,7 +81,7 @@ myModMask = mod1Mask
 
 --Define borderWidth - bumping it to 2px to see if that helps with the issue with x2x
 myBorderWidth :: Dimension
-myBorderWidth = 2 
+myBorderWidth = 1
 --------------------------------------------------------------------------------
 -- Make the bordercolor different here because well...  this is where it is defined.  BAM spice-weasel!
 myNormalBorderColor :: String
@@ -94,12 +94,13 @@ myFocusedBorderColor = "#009900"
 myWorkspaceNames :: [WorkspaceId]
 myWorkspaceNames = ["tmux","web","web1","code","code1","code2","im"]
 
---myWorkspaces :: [WorkspaceId]
---myWorkspaces = map show [1..9 :: Int]
+myWorkspaces :: [WorkspaceId]
+myWorkspaces = map show [1..9 :: Int]
 
-myWorkspaces :: [WorkspaceId] -- [String]
-myWorkspaces = zipWith (++) (map show [1..]) wsnames
-    where wsnames = map ((:) ':') myWorkspaceNames
+--myWorkspaces :: [WorkspaceId]
+--myWorkspaces = zipWith (++) (map show [1..]) wsnames
+--    where wsnames = map ((:) ':') myWorkspaceNames
+
 --wsNameMap - workspaceNameMap
 wsNameMap :: M.Map WorkspaceId WorkspaceId
 wsNameMap = M.fromList $ zip myWorkspaces myWorkspaceNames
@@ -111,19 +112,20 @@ wsNameToId = M.fromList $ zip myWorkspaceNames myWorkspaces
 -- Workspace colors map
 wsColorMap :: M.Map WorkspaceId String
 wsColorMap = M.fromList $ zip myWorkspaces
-        [ "#b58900" --yellow
-        , "#859900" --green
-        , "#dc322f" --red
+        [
+        "#859900" --green
+        , "#586e75" --ColorISelected
         , "#268bd2" --blue
         , "#6c71c4" --violet
         , "#2aa198" --cyan
         , "#cb4b16" --orange
-        , "#d33682" --magenta
+        , "#b58900" --yellow
+        , "#dc322f" --red
         ]
 
---XPConfig 
-myXPConfig :: XPConfig
-myXPConfig = def {
+--XPConfig
+myShellPrompt :: XPConfig
+myShellPrompt = def {
     borderColor     = "DarkOrange"
     , bgColor       = "#42CBF5" --blue
     , fgColor       = "#F46D43" --orange
@@ -131,12 +133,27 @@ myXPConfig = def {
     , fgHLight      = "#f8f8f8"
     , position      = Bottom
     , font          = myFont
-    , height        = 22
+    , height        = 24
     , defaultText   = []
-}  where
+}
+-------------------------------------------------------------------------------
+--dev0xPP - Pretty printing for my settings
+dev0xPP :: PP
+dev0xPP = def {
+      ppHidden      = xmobarColor "#4E4E4E" "" . noScratchPad
+      , ppCurrent   = \wsId -> xmobarColor "#AFFF00" (ppMultiColor wsId) . pad . wrap "[" "]" $ wsName wsId
+      , ppVisible   = xmobarColor "#808080" "" . wrap "-" "-"
+      , ppUrgent    = xmobarColor "#FF0000" "" . wrap "*" "*"
+      , ppLayout    = xmobarColor "#2AA198" ""
+      , ppTitle     = xmobarColor "#00FF00" "" . shorten 80
+      , ppSep       = "<fc=#0033FF> Σ </fc>"
+    }
+   where
+   noScratchPad ws = if ws == "NSP" then "" else pad ws
+   ppMultiColor wsId = fromMaybe "#586e75" (M.lookup wsId wsColorMap)
    wsName wsId = case M.lookup wsId wsNameMap of
-       Nothing    -> wsId
-       Just name  -> wsId ++ ":" ++ name
+                                Nothing    -> wsId
+                                Just wsName  -> wsId ++ ":" ++ wsName
 
 
 --showmenu - dmenu - which I've broken the config/formatting out - why? because fuck you, that's why
@@ -152,15 +169,15 @@ dmenuFormatString = concat
         , " -fn 'envypn' "  -- fc-match envypn YIELDS envypn7x13.pcf.gz: "envpn" "Regular" 
     ]
 --------------------------------------------------------------------------------
--- MangeDocks --> ManageHook 
-myManageHook :: ManageHook 
+-- MangeDocks --> ManageHook
+myManageHook :: ManageHook
 myManageHook = composeAll . concat $
    [ [ className =? "Chromium" --> doShift "web" ]
        , [ className =? "Firefox" --> doShift "web2"]
        , [ className =? "Eclipse" --> doShift "code2" <+> doFloat]
-       , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd"    --> (placeHook chatPlacement <+> doFloat) ] 
-       , [ appName =? "crx_knipolnnllmklapflnccelgolnpehhpl"    --> (placeHook chatPlacement <+> doShift "im" <+> doFloat) ] 
-       , [ appName =? "crx_fahmaaghhglfmonjliepjlchgpgfmobi"    --> (placeHook gmusicPlacement <+> doShift "term1" <+> doFloat) ] --gmusic 
+       , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd"    --> (placeHook chatPlacement <+> doFloat) ]
+       , [ appName =? "crx_knipolnnllmklapflnccelgolnpehhpl"    --> (placeHook chatPlacement <+> doShift "im" <+> doFloat) ]
+       , [ appName =? "crx_fahmaaghhglfmonjliepjlchgpgfmobi"    --> (placeHook gmusicPlacement <+> doShift "term1" <+> doFloat) ] --gmusic
        , [ (className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
        , [ manageDocks ]
        , [ manageHookScratchPad ]
@@ -173,25 +190,6 @@ gmusicPlacement :: Placement
 gmusicPlacement = withGaps(0,16,1,0) (inBounds (smart(0,1)))
 
 -------------------------------------------------------------------------------
---dev0xPP - Pretty printing for my settings
-dev0xPP :: PP
-dev0xPP = def {
-      ppHidden      = xmobarColor "#4E4E4E" "" . noScratchPad
---      , ppCurrent   = xmobarColor "#AFFF00" "" . wrap "[" "]" 
-      , ppCurrent   = \wsId -> xmobarColor "#AFFF00" (ppMultiColor wsId) . pad . wrap "[" "]" $ wsName wsId
-      , ppVisible   = xmobarColor "#808080" "" . wrap "-" "-"
-      , ppUrgent    = xmobarColor "#FF0000" "" . wrap "*" "*"
-      , ppLayout    = xmobarColor "#2AA198" ""
-      , ppTitle     = xmobarColor "#00FF00" "" . shorten 80
-      , ppSep       = "<fc=#0033FF> | </fc>"
-    } 
-   where
-   noScratchPad ws = if ws == "NSP" then "" else pad ws
-   ppMultiColor wsId = fromMaybe "#586e75" (M.lookup wsId wsColorMap)
-   wsName wsId = case M.lookup wsId wsNameMap of
-                                Nothing    -> wsId
-                                Just name  -> wsId ++ ":" ++ name
---------------------------------------------------------------------------------
 --scratchpads
 myScratchpads :: [NamedScratchpad]
 myScratchpads =
@@ -200,15 +198,20 @@ myScratchpads =
         (title =? "htop")
         (customFloating $ W.RationalRect (1/6) (1/6) (2/3) (2/3))
 
-  , NS  "scratchr" 
+  , NS  "scratchr"
         (myTerminal ++ " -name scratchr")
-        (appName =? "scratchr") 
+        (appName =? "scratchr")
         (customFloating $ W.RationalRect (0.65) (0.4) (0.45) (0.60))
 
-  , NS  "scratchl" 
+  , NS  "scratchl"
         (myTerminal ++ " -name scratchl")
-        (appName =? "scratchl") 
+        (appName =? "scratchl")
         (customFloating $ W.RationalRect (0.0) (0.45) (0.45) (0.60))
+
+  , NS  "scratchc"
+        (myTerminal ++ " -name scratchc")
+        (appName =? "scratchc")
+        (customFloating $ W.RationalRect (1/6) (1/6) (2/3) (2/3))
 
   , NS  "ranger"
         (myTerminal ++ " -e ranger")
@@ -287,7 +290,7 @@ main :: IO ()
 main = do
   xmobarHandle     <- spawnPipe "xmobar -x 0 ~/.xmobarrc0" 
   --xmobarRight    <- spawnPipe "xmobar -x 1 ~/.xmobarrc1"
-  xmonad $ def { 
+  xmonad $ def {
       focusedBorderColor = myFocusedBorderColor
       ,normalBorderColor = myNormalBorderColor
       ,borderWidth       = myBorderWidth
@@ -300,7 +303,7 @@ main = do
       ,startupHook      = myStartupHook
       ,terminal         = myTerminal
       ,workspaces       = myWorkspaces
-  } 
+  }
 
 -------------------------------------------------------------------------------
 --Keys
@@ -309,7 +312,7 @@ myKeys x = M.union(M.fromList (newKeys x)) (keys def x)
 -- newKeys is self defined configuration to which then gets merged into myKeys to then be pulled into xmonad conf
 newKeys  :: XConfig Layout -> [((KeyMask, KeySym), X())]
 newKeys (XConfig {XMonad.modMask = modm}) =
-    [    
+    [
         ((modm                   ,xK_p)          ,showmenu)  --dmenu
         ,((modm                  ,xK_b)          ,sendMessage ToggleStruts) 
         ,((modm                  ,xK_f)          ,spawn "urxvt -e xcalc")
@@ -322,14 +325,33 @@ newKeys (XConfig {XMonad.modMask = modm}) =
         ,((modm.|.shiftMask      ,xK_0)          ,prevWS)
         ,((modm.|.shiftMask      ,xK_q)          ,quitWithWarning)
         ,((modm.|.shiftMask      ,xK_BackSpace)  ,removeWorkspace)  --removeWorkspace 
-        ,((modm                  ,xK_v)          ,selectWorkspace myXPConfig)
-        ,((modm.|.shiftMask      ,xK_m)          ,withWorkspace   myXPConfig (windows . W.shift)) --MOVE
-        ,((modm.|.shiftMask      ,xK_r)          ,renameWorkspace myXPConfig)
-        ,((modm                  ,xK_a)          ,addWorkspacePrompt myXPConfig)
+        ,((modm                  ,xK_v)          ,selectWorkspace myShellPrompt)
+        ,((modm.|.shiftMask      ,xK_m)          ,withWorkspace   myShellPrompt(windows . W.shift)) --MOVE
+        ,((modm.|.shiftMask      ,xK_r)          ,renameWorkspace myShellPrompt)
+        ,((modm                  ,xK_a)          ,addWorkspacePrompt myShellPrompt)
         ,((modm                  ,xK_e)          ,namedScratchpadAction myScratchpads "ranger")
+        ,((modm                  ,xK_i)          ,namedScratchpadAction myScratchpads "scratchc")
         ,((modm                  ,xK_f)          ,namedScratchpadAction myScratchpads "scratchr")
         ,((modm.|.shiftMask      ,xK_f)          ,namedScratchpadAction myScratchpads "scratchl")
     ]
+{-
+    -- "M-[1..9,0,-]" -- Switch to workspace N
+    -- "M-S-[1..9,0,-]" -- Move client to workspace N
+    -- "M-C-[1..9,0,-]" -- Copy client to workspace N
+    ++
+    [(modm ++ m ++ k, windows $ f i)
+        | (i, k) <- zip (XMonad.workspaces conf) myWorkspaces
+        , (f, m) <- [ (W.view, "")
+            , (W.shift, "S-")
+            , (W.copy, "C-") ]
+    ]
+    ++
+    -- "M-C-S-[1..9,0,-]" -- Move client to workspace N and follow
+    [("M-C-S-" ++ k, windows (W.shift i) >> windows (W.view i))
+        | (i, k) <- zip (XMonad.workspaces conf) myWorkspaces
+    ]
+
+-}
     ++ -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-DynamicWorkspaces.html 
     zip (zip (repeat (modm)) [xK_1..xK_9]) (map (withNthWorkspace W.greedyView) [0..])
     ++ -- revise for convention? 

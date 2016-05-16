@@ -1,7 +1,7 @@
-Config { 
+Config {
 -- config settings - IN ALPHABETICAL ORDER
--- Just Some Characters: [" Ψ ", " Σ ", " α ", " β ", " Π ", " Θ "] 
-    additionalFonts = []
+-- Some Chars: ["Ψ", "Σ", "α", "β", "Π", "Θ", "§", "¤", "›", "»", "«", "‡", "▶", "★", "◥" , "❯", "❮"]
+   additionalFonts = []
     , alpha =           255
     , allDesktops =     True    -- show on all desktops
     , border =          NoBorder
@@ -11,24 +11,27 @@ Config {
     , font =            "xft:terminesspowerline:pixelsize=16"
     , hideOnStart =     False  -- start with window unmapped (hidden)
     , iconOffset =      -1
-    , iconRoot =        "." 
+    , iconRoot =        "."
     , lowerOnStart =    False
     , overrideRedirect = True    -- set the Override Redirect flag (Xlib)
     , persistent =      True    -- enable/disable hiding (True = disabled)
     , position = TopW L 100      -- Top W Left 100?   dunno just leaving
     , pickBroadest =    True    -- choose widest display (multi-monitor)
-    , textOffset = -1 
-    , commands = [ 
-        Run Weather "KMSN" 
+    , textOffset = -1
+    , commands = [
+        Run Date "%b %_d %H:%M" "date" 60
+        ,Run Weather "KMSN"
             ["-t", "<tempF>F"
                 , "-L","32"
-                , "-H", "72"
+                , "-H", "75"
                 , "--normal", "green"
                 , "--high", "red"
                 , "--low", "lightblue"
             ] 36000
         , Run Memory ["-t","Mem: <usedratio>%"
-            , "-l", "green"
+            , "-L", "35"
+            , "-H", "70"
+            , "--low", "green"
             , "--normal", "orange"
             , "--high", "red"
         ] 40
@@ -37,5 +40,5 @@ Config {
     ]
     , sepChar = "%"
     , alignSep = "}{"
-    , template = " %StdinReader% }{ <fc=white,red>%locks%</fc> <fc=#0033FF>|</fc> %memory% <fc=#0033FF>|</fc>%KMSN%"
+    , template = " %StdinReader% }{ <fc=white,red>%locks%</fc> <fc=#0033FF>‡</fc> %memory% <fc=#0033FF>‡</fc> %KMSN% <fc=#0033FF>‡</fc> %date%"
 }
