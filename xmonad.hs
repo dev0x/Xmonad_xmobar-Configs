@@ -2,22 +2,21 @@
  -
  = ||+||+||+||+||+||+||+||+||+||+||+||+||+||+||+||
  -
- = Xmonad.hs 
+ = Xmonad.hs
  -
  = ||+||+||+||+||+||+||+||+||+||+||+||+||+||+||+||
  -
  -}
--- Language
 {-# LANGUAGE DeriveDataTypeable, NoMonomorphismRestriction, TypeSynonymInstances, MultiParamTypeClasses,  ImplicitParams, PatternGuards #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
--- Import System  
+-- Import System
 import XMonad
 import qualified Data.Map as M
 import Data.Maybe
-import qualified XMonad.StackSet as W 
+import qualified XMonad.StackSet as W
 import System.IO
 import System.Exit
 import Control.Monad
@@ -25,6 +24,7 @@ import Control.Monad
 -- Actions
 import XMonad.Actions.CycleWS
 import XMonad.Actions.DynamicWorkspaces
+import XMonad.Actions.DynamicWorkspaceOrder as DWO
 
 -- Hooks
 import XMonad.Hooks.ManageDocks
@@ -59,7 +59,7 @@ import Data.Ratio((%))
 -- self defined function(s)
 --------------------------------------------------------------------------------
 -- quit with warning
-quitWithWarning :: X ()    
+quitWithWarning :: X ()
 quitWithWarning = do
     let message = "confirm quit"
     s <- dmenu [message]
@@ -72,12 +72,12 @@ quitWithWarning = do
 myTerminal  :: String
 myTerminal = "urxvt"
 
-myFont :: String 
+myFont :: String
 myFont = "xft:Fira Mono For Powerline:size=16"
 
 --Define MyModMask
 myModMask   :: KeyMask
-myModMask = mod1Mask 
+myModMask = mod1Mask
 
 --Define borderWidth - bumping it to 2px to see if that helps with the issue with x2x
 myBorderWidth :: Dimension
@@ -105,7 +105,7 @@ myWorkspaces = map show [1..9 :: Int]
 wsNameMap :: M.Map WorkspaceId WorkspaceId
 wsNameMap = M.fromList $ zip myWorkspaces myWorkspaceNames
 
---wsNameToId - workspaceName to ID function 
+--wsNameToId - workspaceName to ID function
 wsNameToId :: M.Map WorkspaceId WorkspaceId
 wsNameToId = M.fromList $ zip myWorkspaceNames myWorkspaces
 
@@ -147,6 +147,7 @@ dev0xPP = def {
       , ppLayout    = xmobarColor "#2AA198" ""
       , ppTitle     = xmobarColor "#00FF00" "" . shorten 80
       , ppSep       = "<fc=#0033FF> Σ </fc>"
+      , ppSort  DWO.getSortByOrder
     }
    where
    noScratchPad ws = if ws == "NSP" then "" else pad ws
@@ -163,10 +164,10 @@ showmenu = spawn ("dmenu_run" ++ dmenuFormatString)
 dmenuFormatString :: String
 dmenuFormatString = concat
     [     " -nb '#000000' " -- black
-        , " -nf '#3289BD' " -- ?? 
+        , " -nf '#3289BD' " -- ??
         , " -sb '#42CBF5' " -- blue
-        , " -sf '#F46D43' " -- orange 
-        , " -fn 'envypn' "  -- fc-match envypn YIELDS envypn7x13.pcf.gz: "envpn" "Regular" 
+        , " -sf '#F46D43' " -- orange
+        , " -fn 'envypn 18' "  -- fc-match envypn YIELDS envypn7x13.pcf.gz: "envpn" "Regular"
     ]
 --------------------------------------------------------------------------------
 -- MangeDocks --> ManageHook
@@ -201,12 +202,12 @@ myScratchpads =
   , NS  "scratchr"
         (myTerminal ++ " -name scratchr")
         (appName =? "scratchr")
-        (customFloating $ W.RationalRect (0.65) (0.4) (0.45) (0.60))
+        (customFloating $ W.RationalRect (0.65) (0.4) (0.35) (0.60))
 
   , NS  "scratchl"
         (myTerminal ++ " -name scratchl")
         (appName =? "scratchl")
-        (customFloating $ W.RationalRect (0.0) (0.45) (0.45) (0.60))
+        (customFloating $ W.RationalRect (0.0) (0.4) (0.35) (0.60))
 
   , NS  "scratchc"
         (myTerminal ++ " -name scratchc")
@@ -221,7 +222,7 @@ myScratchpads =
   , NS  "chat"
         (myTerminal ++ " -name 'NSP-chat'")
         (title =? "NSP-chat")
-        (customFloating $ W.RationalRect (1/6) (1/10) (0.40) (0.40)) 
+        (customFloating $ W.RationalRect (1/6) (1/10) (0.40) (0.40))
   ]
 
 --------------------------------------------------------------------------------
@@ -230,7 +231,7 @@ manageHookScratchPad :: ManageHook
 manageHookScratchPad = namedScratchpadManageHook myScratchpads
 
 --- Theme For Tabbed layout
-myTabTheme :: Theme 
+myTabTheme :: Theme
 myTabTheme = def { decoHeight = 16
             , activeColor = "#000000"
             , activeBorderColor = "#A6C292"
@@ -245,13 +246,13 @@ myTabTheme = def { decoHeight = 16
 --------------------------------------------------------------------------------
 --  This Type Signature is a bit crazy - a bunch of expletives summarize trying to write this crap out lol
 {-
-myLayoutHook :: onWorkspace() 
+myLayoutHook :: onWorkspace()
 -}
 myLayoutHook = onWorkspace "tmux" tmuxLayout
-             $ onWorkspace "im" imLayout 
+             $ onWorkspace "im" imLayout
              $ onWorkspace "web" webLayout
              $ onWorkspace "web1" webLayout
-             $ standardLayouts 
+             $ standardLayouts
     where
     --Layouts
     standardLayouts     = avoidStruts $ (reflectTiled ||| magLayout ||| (tabbed shrinkText myTabTheme) ||| Grid ||| Full ||| threeLayout)
@@ -263,20 +264,20 @@ myLayoutHook = onWorkspace "tmux" tmuxLayout
     magLayout           = magnifier (Tall 1 (3/100) (1/2))
     --tab Layout
     tabLayout           = (tabbed shrinkText myTabTheme)
-    --Three Columnar 
+    --Three Columnar
     threeLayout         = ThreeCol 1 (3/100) (1/2)
     --tmux layout
-    tmuxLayout          = smartBorders $ avoidStruts (magLayout ||| Grid ||| Full) 
+    tmuxLayout          = smartBorders $ avoidStruts (magLayout ||| Grid ||| Full)
     --Im Layout
     imLayout            = withIM (1%10) (Role "roster") (standardLayouts)
     --Web Layout
     webLayout           = avoidStruts $ (tabLayout ||| magLayout ||| reflectTiled ||| Grid ||| Full ||| threeLayout)
-     
+
 -------------------------------------------------------------------------------
 --myStartupHook
 myStartupHook :: X ()
 myStartupHook = do
-        setWMName "LG3D" 
+        setWMName "LG3D"
         spawnOnce "xscreensaver -nosplash"
 
 -------------------------------------------------------------------------------
@@ -288,7 +289,7 @@ myLogHook h = dynamicLogWithPP $ dev0xPP {ppOutput = hPutStrLn h}
 --Run XMonad with the defaults
 main :: IO ()
 main = do
-  xmobarHandle     <- spawnPipe "xmobar -x 0 ~/.xmobarrc0" 
+  xmobarHandle     <- spawnPipe "xmobar -x 0 ~/.xmobarrc0"
   --xmobarRight    <- spawnPipe "xmobar -x 1 ~/.xmobarrc1"
   xmonad $ def {
       focusedBorderColor = myFocusedBorderColor
@@ -296,10 +297,10 @@ main = do
       ,borderWidth       = myBorderWidth
       ,logHook          = myLogHook xmobarHandle
       ,layoutHook       = myLayoutHook
-      ,manageHook       = manageDocks <+> myManageHook <+> manageHookScratchPad 
+      ,manageHook       = manageDocks <+> myManageHook <+> manageHookScratchPad
       ,handleEventHook  = docksEventHook <+> handleEventHook def
       ,modMask          = myModMask
-      ,keys             = myKeys 
+      ,keys             = myKeys
       ,startupHook      = myStartupHook
       ,terminal         = myTerminal
       ,workspaces       = myWorkspaces
@@ -314,7 +315,7 @@ newKeys  :: XConfig Layout -> [((KeyMask, KeySym), X())]
 newKeys (XConfig {XMonad.modMask = modm}) =
     [
         ((modm                   ,xK_p)          ,showmenu)  --dmenu
-        ,((modm                  ,xK_b)          ,sendMessage ToggleStruts) 
+        ,((modm                  ,xK_b)          ,sendMessage ToggleStruts)
         ,((modm                  ,xK_f)          ,spawn "urxvt -e xcalc")
         ,((modm                  ,xK_Return)     ,spawn "urxvt")
         ,((modm                  ,xK_m)          ,spawn "chromium-browser --app='https://mail.google.com'")
@@ -324,7 +325,7 @@ newKeys (XConfig {XMonad.modMask = modm}) =
         ,((modm                  ,xK_0)          ,nextWS)
         ,((modm.|.shiftMask      ,xK_0)          ,prevWS)
         ,((modm.|.shiftMask      ,xK_q)          ,quitWithWarning)
-        ,((modm.|.shiftMask      ,xK_BackSpace)  ,removeWorkspace)  --removeWorkspace 
+        ,((modm.|.shiftMask      ,xK_BackSpace)  ,removeWorkspace)  --removeWorkspace
         ,((modm                  ,xK_v)          ,selectWorkspace myShellPrompt)
         ,((modm.|.shiftMask      ,xK_m)          ,withWorkspace   myShellPrompt(windows . W.shift)) --MOVE
         ,((modm.|.shiftMask      ,xK_r)          ,renameWorkspace myShellPrompt)
@@ -352,8 +353,8 @@ newKeys (XConfig {XMonad.modMask = modm}) =
     ]
 
 -}
-    ++ -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-DynamicWorkspaces.html 
+    ++ -- http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-DynamicWorkspaces.html
     zip (zip (repeat (modm)) [xK_1..xK_9]) (map (withNthWorkspace W.greedyView) [0..])
-    ++ -- revise for convention? 
+    ++ -- revise for convention?
     zip (zip (repeat (modm.|.shiftMask)) [xK_1..xK_9]) (map (withNthWorkspace W.shift) [0..])
 --------------------------------------------------------------------------------
