@@ -40,18 +40,15 @@ import XMonad.Layout.Magnifier
 --actions
 import XMonad.Actions.CycleWS
 import XMonad.Actions.DynamicWorkspaces
-import XMonad.Actions.CopyWindow
 
 --prompt
 import XMonad.Prompt
-import XMonad.Prompt.Workspace
 
 -- utils
 import XMonad.Util.Dmenu
 import XMonad.Util.Run(spawnPipe)
 import XMonad.Util.NamedScratchpad
-import XMonad.Util.SpawnOnce
-
+import XMonad.Util.WorkspaceCompare
 
 -- Data.Ratio due to the IM layout
 import Data.Ratio ((%))
@@ -71,9 +68,6 @@ quitWithWarning = do
 carryToNamedWs :: XPConfig -> X ()
 carryToNamedWs = \xpconf -> withWorkspace xpconf (\ws -> windows $ W.greedyView ws . W.shift ws)
 
-promptedShift :: X ()
-promptedShift = workspacePrompt myXPConfig $ windows . W.shift
-
 --Define Terminal
 myTerminal :: String
 myTerminal = "urxvt"
@@ -88,8 +82,8 @@ myBackground, myForeground, myBorder, myNormalBorderColor, myFocusedBorderColor 
 myBackground              = "#0c1021"
 myForeground              = "#f8f8f8"
 myBorder                  = "DarkOrange"
-myNormalBorderColor     = "#202020"
-myFocusedBorderColor    = "#7C7C7C"
+myNormalBorderColor       = "#202020"
+myFocusedBorderColor      = "#7C7C7C"
 
 myBorderWidth :: Dimension
 myBorderWidth = 1
@@ -121,6 +115,7 @@ myXPConfig = def {
     , defaultText       = []
 }
 
+
 -- Shell prompt theme
 myShellPrompt :: XPConfig
 myShellPrompt = def {
@@ -132,6 +127,7 @@ myShellPrompt = def {
     ,height            = 24
     ,defaultText       = []
 }
+
 
 --------------------------------------------------------------------------------
 -- Pretty Printing
@@ -149,19 +145,19 @@ customPP = def {
     ppMultiColor wsId = fromMaybe "#586e75" (M.lookup wsId wsColorMap)
     wsName wsId = case M.lookup wsId wsNameMap of
         Nothing     -> wsId
-        Just name   -> wsId ++ "»" ++ name
+        Just name   -> wsId ++ " » " ++ name
 
 --------------------------------------------------------------------------------
 --Workspaces
 
 myWorkspaces :: [WorkspaceId]
 myWorkspaces =
-  map show [1,2,3,4,5,6,7 :: Int]
+  map show [1..8 :: Int]
     ++ ["-"]
 
 myWorkspaceNames :: [WorkspaceId]
 myWorkspaceNames =
-        [ "tmux", "crow", "fire", "code", "music", "log" ]
+        [ "tmux", "crow", "fire", "code", "music", "chat", "log" , "ds"]
 
 --wsNameMap - workspaceNameMap
 wsNameMap :: M.Map WorkspaceId WorkspaceId
@@ -187,6 +183,7 @@ wsColorMap = M.fromList $ zip myWorkspaces
 showmenu :: MonadIO m => m()
 showmenu = spawn ("dmenu_run" ++ dmenuFormatString)
 
+
 dmenuFormatString :: [Char]
 dmenuFormatString = concat
     [     " -nb '#000000' " -- black
@@ -209,10 +206,10 @@ myManageHook = composeAll . concat $
     , [ className =? "Eclipse" --> doFloat <+> doShift "code2"]
     , [ className =? "Steam" --> doFloat]
     , [ (className =? "Firefox" <&&> resource =? "Dialog") --> doFloat]
-    , [ appName =? "crx_knipolnnllmklapflnccelgolnpehhpl" --> (placeHook chatPlacement <+> doFloat)] -- hangout
-    , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd" --> (placeHook chatPlacement <+> doFloat)] -- hangout
+    , [ appName =? "crx_knipolnnllmklapflnccelgolnpehhpl" --> (placeHook chatPlacement <+> doShift "6" <+> doFloat)] -- hangout
+    , [ appName =? "crx_nckgahadagoaajjgafhacjanaoiihapd" --> (placeHook chatPlacement <+> doShift "6" <+> doFloat)] -- hangout
     , [ appName =? "crx_fahmaaghhglfmonjliepjlchgpgfmobi" --> (placeHook chatPlacement <+> doFloat)] -- gmusic
-    , [ className =? "Telegram" --> (placeHook telegramPlacement <+> doShift "im" <+> doFloat)]
+    , [ className =? "Telegram" --> (placeHook telegramPlacement <+> doShift "6" <+> doFloat)]
   ]
 
 --Define chat Placement - used in myManageHook
@@ -241,22 +238,27 @@ myScratchPads =
          (appName =? "NSP-mpd") $ customFloating fullScreen
     , NS "pidgin" "pidgin"
          (className =? "Pidgin" <&&> role =? "buddy_list") defaultFloating
---
+
     , NS  "scratchr"
          (myTerminal ++ " -name scratchr")
          (appName =? "scratchr")
-         (customFloating $ W.RationalRect (0.65) (0.4) (0.45) (0.60))
+         (customFloating $ W.RationalRect (0.53) (0.4) (0.47) (0.6))
 
     , NS  "scratchl"
          (myTerminal ++ " -name scratchl")
          (appName =? "scratchl")
-         (customFloating $ W.RationalRect (0.0) (0.45) (0.45) (0.60))
+         (customFloating $ W.RationalRect (0.0) (0.4) (0.47) (0.60))
 
     , NS  "scratchc"
-          (myTerminal ++ " -name scratchc")
+         (myTerminal ++ " -name scratchc")
          (appName =? "scratchc")
          (customFloating $ W.RationalRect (1/6) (1/6) (2/3) (2/3))
---
+
+    , NS  "scratchc-big"
+         (myTerminal ++ " -name scratchc-big")
+         (appName =? "scratchc-big")
+         (customFloating $ W.RationalRect (0.10) (0.25) (0.80) (0.55))
+
     ]
     where
         role = stringProperty "WM_WINDOW_ROLE"
@@ -288,78 +290,13 @@ myLogHook h = dynamicLogWithPP . namedScratchpadFilterOutWorkspacePP $ customPP 
 --------------------------------------------------------------------------------
 -- b!tch of a type signature
 {-
-   myLayoutHook :: onWorkspace
-                        (Layout
-                           AddRoster
-                           (Layout
-                              AvoidStruts
-                              (Choose
-                                 (Layout
-                                    SmartBorder ResizableTall)
-                                 (Choose
-                                    (Layout SmartBorder
-                                       (Layout Magnifier Tall))
-                                    (Choose
-                                       (Mirror
-                                          (Layout SmartBorder ResizableTall))
-                                       (Choose ThreeCol Full))))))
-                        (onWorkspace
-                           (Layout
-                              AvoidStruts
-                              (Choose
-                                 (Layout
-                                    SmartBorder
-                                    (Layout
-                                       (Decoration TabbedDecoration DefaultShrinker)
-                                       Simplest))
-                                 (Choose
-                                    (Layout SmartBorder ResizableTall)
-                                    (Choose
-                                       Grid
-                                       (Choose
-                                          (Layout SmartBorder
-                                             (Layout
-                                                Magnifier Tall))
-                                          Full)))))
-                           (onWorkspace
-                              (Layout
-                                 AvoidStruts
-                                 (Choose
-                                    (Layout SmartBorder
-                                       (Layout
-                                          (Decoration TabbedDecoration DefaultShrinker)
-                                          Simplest))
-                                    (Choose
-                                       (Layout SmartBorder ResizableTall)
-                                       (Choose
-                                          Grid
-                                          (Choose
-                                             (Layout SmartBorder
-                                                (Layout
-                                                   Magnifier Tall))
-                                             Full)))))
-                              (onWorkspace
-                                 (Layout
-                                    WithBorder
-                                    (Layout WindowChanges SimplestFloat))
-                                 (Layout
-                                    AvoidStruts
-                                    (Choose
-                                       (Layout SmartBorder ResizableTall)
-                                       (Choose
-                                          (Layout SmartBorder
-                                             (Layout Magnifier Tall))
-                                          (Choose
-                                             (Mirror
-                                                (Layout SmartBorder ResizableTall))
-                                             (Choose ThreeCol Full))))))))
-
-     Window
+   myLayoutHook :
 -}
 
 myLayoutHook =
     onWorkspace "im" imLayout
-    $ onWorkspace "crow" webLayout
+    $ onWorkspace "1" tmuxLayout
+    $ onWorkspace "2" webLayout
     $ onWorkspace "fire" webLayout
     $ onWorkspace "steam" steam
     $ standardLayouts
@@ -389,14 +326,15 @@ myLayoutHook =
     imLayout            = withIM (1%10) (Role "roster") (standardLayouts)
 
     --Web Layout
-    webLayout           = avoidStruts $(tabLayout ||| tiled ||| Grid ||| magLayout ||| Full)
+    webLayout           = avoidStruts (tabLayout ||| tiled ||| Grid ||| magLayout ||| Full)
+    tmuxLayout          = avoidStruts (tabLayout ||| magLayout ||| Full )
 
 --------------------------------------------------------------------------------
 --StartupHook
 myStartupHook :: X()
 myStartupHook = do
     setWMName "LG3D"
-    spawnOnce "xscreensaver -nosplash"
+    --spawnOnce "xscreensaver -nosplash"
 
 --------------------------------------------------------------------------------
 --Run XMonad with the defaults
@@ -448,26 +386,34 @@ newKeys (XConfig {XMonad.modMask = modm}) = [
     ,((modm                 , xK_a)             , addWorkspacePrompt myXPConfig) -- add WS with prompt
     ,((modm                 , xK_grave)         , namedScratchpadAction myScratchPads "volume" ) -- scratchPad
     ,((modm                 , xK_e)             , namedScratchpadAction myScratchPads "scratchc") -- scratchPad
+    ,((modm.|.shiftMask     , xK_e)             , namedScratchpadAction myScratchPads "scratchc-big") -- scratchPad
     ,((modm                 , xK_i)             , namedScratchpadAction myScratchPads "scratchr") -- scratchPad
     ,((modm.|.shiftMask     , xK_i)             , namedScratchpadAction myScratchPads "scratchl") -- scratchPad
   ]
-  ++ -- mapping switching to different workspaces
-  zip (zip (repeat (modm)) [xK_1..xK_9]) (map (withNthWorkspace W.view) [0..])
-  ++ -- mapping MOVING windows to different workspaces
-  zip (zip (repeat (modm.|.shiftMask)) [xK_1..xK_9]) (map (withNthWorkspace W.shift) [0..])
+  ++ -- Start at 1 instead of 0 because we have the NSP workspace as first
+  zip (zip (repeat modm) [xK_1..xK_9]) (map (withNthWorkspaceFiltered W.greedyView) [0..])
+  ++ -- mod-shift-[F1..F12] Move client to workspace N
+  zip (zip (repeat (modm.|.shiftMask)) [xK_1..xK_9]) (map (withNthWorkspaceFiltered W.shift) [0..])
+
+ignoredWorkspaces:: [[Char]]
+ignoredWorkspaces = ["NSP"]
+-- Apply an action to the window stack, while ignoring certain workspaces
+withNthWorkspaceFiltered :: (String -> WindowSet -> WindowSet) -> Int -> X ()
+withNthWorkspaceFiltered job wnum = do
+  sort <- getSortByIndex
+  ws <- gets (filter (\s -> not(s `elem` ignoredWorkspaces)) . map W.tag . sort . W.workspaces . windowset)
+  case drop wnum ws of
+    (w:_) -> windows $ job w
+    [] -> return ()
 
 {-
-  -- "M-[1..9,0,-]" -- Switch to workspace N
-  -- "M-S-[1..9,0,-]" -- Move client to workspace N
-  -- "M-C-[1..9,0,-]" -- Copy client to workspace N
-  [("M-" ++ m ++ k, windows $ f i)
-      | (i, k) <- zip (XMonad.workspaces conf) myWorkspaces
-      , (f, m) <- [ (W.view, ""), (W.shift, "S-"), (copy, "C-") ]
-  ]
-  ++
-  -- "M-C-S-[1..9,0,-]" -- Move client to workspace N and follow
-  [("M-C-S-" ++ k, windows (W.shift i) >> windows (W.view i))
-      | (i, k) <- zip (XMonad.workspaces conf) myWorkspaces
-  ]
+hiddenNonIgnoredWS :: WSType
+hiddenNonIgnoredWS = WSIs getWShiddenNonIgnored
+  where
+    getWShiddenNonIgnored :: X (WindowSpace -> Bool)
+    getWShiddenNonIgnored = do
+      hs <- gets (filter_ignored . map W.tag . W.hidden . windowset)
+      return (\w -> W.tag w `elem` hs)
+    filter_ignored = filter (\t -> not (t `elem` ignoredWorkspaces))
 -}
 --------------------------------------------------------------------------------
