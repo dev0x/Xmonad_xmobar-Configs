@@ -2,7 +2,13 @@
  -
  = ||+||+||+||+||+||+||+||+||+||+||+||+||+||+||+||
  -
- = Xmonad.hs
+--                                                                       --
+--     _|      _|  _|      _|                                      _|    --
+--       _|  _|    _|_|  _|_|    _|_|    _|_|_|      _|_|_|    _|_|_|    --
+--         _|      _|  _|  _|  _|    _|  _|    _|  _|    _|  _|    _|    --
+--       _|  _|    _|      _|  _|    _|  _|    _|  _|    _|  _|    _|    --
+--     _|      _|  _|      _|    _|_|    _|    _|    _|_|_|    _|_|_|    --
+--                                                                       --
  -
  = ||+||+||+||+||+||+||+||+||+||+||+||+||+||+||+||
  -
@@ -19,6 +25,8 @@ import qualified XMonad.StackSet as W
 import System.IO
 import System.Exit
 import Control.Monad
+
+import XMonad.Config.Desktop
 
 -- hooks
 import XMonad.Hooks.ManageDocks
@@ -61,12 +69,12 @@ import Data.Maybe
 --Quit with warning prompt at top
 quitWithWarning :: X ()
 quitWithWarning = do
-    let message = "confirm quit"
+    let message = " confirm quit"
     s <- dmenu [message]
     when (s == "y") (io exitSuccess)
 
-carryToNamedWs :: XPConfig -> X ()
-carryToNamedWs = \xpconf -> withWorkspace xpconf (\ws -> windows $ W.greedyView ws . W.shift ws)
+--carryToNamedWs :: XPConfig -> X ()
+--carryToNamedWs = \xpconf -> withWorkspace xpconf (\ws -> windows $ W.greedyView ws . W.shift ws)
 
 --Define Terminal
 myTerminal :: String
@@ -116,7 +124,7 @@ myXPConfig = def {
 }
 
 
--- Shell prompt theme
+{-- Shell prompt theme
 myShellPrompt :: XPConfig
 myShellPrompt = def {
     bgColor            = myBackground
@@ -126,7 +134,7 @@ myShellPrompt = def {
     ,position          = Bottom
     ,height            = 24
     ,defaultText       = []
-}
+} -}
 
 
 --------------------------------------------------------------------------------
@@ -230,10 +238,7 @@ myScratchPads =
     , NS "terminal"
          "urxvt -name 'NSP-Tmux' -e tmux new-session -s scratch \\; set-option destroy-unattached"
          (appName =? "NSP-Tmux") $ customFloating termWindow
-    , NS "notes"
-         "gvim --role 'NSP-notes'~/notes.txt"
-         (role =? "NSP-notes") $ customFloating notesWindow
-    , NS "mpd"
+   , NS "mpd"
          "urxvt -name 'NSP-mpd' -e ncmpcpp"
          (appName =? "NSP-mpd") $ customFloating fullScreen
     , NS "pidgin" "pidgin"
@@ -257,7 +262,7 @@ myScratchPads =
     , NS  "scratchc-big"
          (myTerminal ++ " -name scratchc-big")
          (appName =? "scratchc-big")
-         (customFloating $ W.RationalRect (0.10) (0.25) (0.80) (0.55))
+         (customFloating $ W.RationalRect (0.10) (0.25) (0.80) (0.67))
 
     ]
     where
@@ -269,11 +274,6 @@ myScratchPads =
             where h = 1 - t
                   w = 0.45
                   t = 0.018
-                  l = 1 - w
-        notesWindow = W.RationalRect l t w h
-            where h = 1 - t
-                  w = 0.45
-                  t = 14 / 1080
                   l = 1 - w
         scratchWindow = W.RationalRect l t w h
             where h = 0.45    -- terminal height %
@@ -333,6 +333,7 @@ myLayoutHook =
 --StartupHook
 myStartupHook :: X()
 myStartupHook = do
+    docksStartupHook
     setWMName "LG3D"
     --spawnOnce "xscreensaver -nosplash"
 
@@ -341,7 +342,7 @@ myStartupHook = do
 main :: IO ()
 main = do
   xmproc <- spawnPipe "xmobar -x 0 ~/.xmobarrc"
-  xmonad $ def {        --my<stuff>
+  xmonad $ desktopConfig {        --my<stuff>
     terminal            = myTerminal
     ,workspaces         = myWorkspaces
     ,manageHook         = myManageHook
